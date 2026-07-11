@@ -1,0 +1,13 @@
+{
+    "folders": [
+        {
+            "path": "../../../../finishi-admin"
+        },
+        {
+            "path": "../../.."
+        },
+        {
+            "path": "../../../../finishi-user"
+        }
+    ]
+}

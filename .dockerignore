@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Documentation
+README.md
+*.md
+docs/
+
+# Tests
+test/
+tests/
+*.test.ts
+*.spec.ts
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.json
+
+# Misc
+.editorconfig
+.prettierrc
+.eslintrc*
