@@ -10,7 +10,7 @@ const adminLearningPathsRoutes: FastifyPluginAsync = async (fastify) => {
 
     let query = request.supabase
       .from('learning_paths')
-      .select('*, lessons:learning_path_lessons(count)')
+      .select('*')
       .order('created_at', { ascending: false })
 
     if (q.success && q.data.status) query = query.eq('status', q.data.status)
@@ -25,7 +25,7 @@ const adminLearningPathsRoutes: FastifyPluginAsync = async (fastify) => {
     const { id } = request.params as { id: string }
     const { data, error } = await request.supabase
       .from('learning_paths')
-      .select('*, lessons:learning_path_lessons(*, lesson:lessons(*))')
+      .select('*')
       .eq('id', id)
       .single()
 

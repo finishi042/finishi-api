@@ -10,6 +10,7 @@ import adminLessonsRoutes from './routes/lessons.js'
 import adminLearningPathsRoutes from './routes/learning-paths.js'
 import adminEventsRoutes from './routes/events.js'
 import adminWaitlistRoutes from './routes/waitlist.js'
+import adminImpressionsRoutes from './routes/impressions.js'
 import adminNotificationRoutes from './notifications/routes.js'
 
 /**
@@ -28,6 +29,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   await fastify.register(adminLearningPathsRoutes)
   await fastify.register(adminEventsRoutes)
   await fastify.register(adminWaitlistRoutes)
+  await fastify.register(adminImpressionsRoutes)
   await fastify.register(adminNotificationRoutes)
 }
 

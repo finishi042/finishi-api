@@ -17,7 +17,7 @@ export const SubmitQuizSchema = z.object({
 
 export const CreateSkillSchema = z.object({
   name: z.string().min(1).max(80),
-  description: z.string().min(1).max(500),
+  description: z.string().max(500).optional().default(''),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
 })
 
@@ -26,9 +26,12 @@ export const UpdateSkillSchema = CreateSkillSchema.partial()
 export const CreateLessonSchema = z.object({
   title: z.string().min(1).max(200),
   skill_name: z.string().min(1).max(80),
-  description: z.string().min(1).max(1000),
+  description: z.string().max(1000).optional().default(''),
   duration_mins: z.number().int().min(1).max(480),
-  status: z.enum(['published', 'draft']).default('draft'),
+  status: z.preprocess(
+    (v) => typeof v === 'string' ? v.toLowerCase() : v,
+    z.enum(['published', 'draft']).default('draft')
+  ),
   content: z.string().optional(),
   video_url: z.string().url().optional(),
 })
@@ -43,9 +46,12 @@ export const LessonQuerySchema = z.object({
 
 export const CreateLearningPathSchema = z.object({
   name: z.string().min(1).max(200),
-  description: z.string().min(1).max(1000),
+  description: z.string().max(1000).optional().default(''),
   skill_name: z.string().min(1).max(80),
-  status: z.enum(['active', 'draft', 'archived']).default('draft'),
+  status: z.preprocess(
+    (v) => typeof v === 'string' ? v.toLowerCase() : v,
+    z.enum(['active', 'draft', 'archived']).default('draft')
+  ),
 })
 
 export const UpdateLearningPathSchema = CreateLearningPathSchema.partial()

@@ -25,7 +25,7 @@ export interface WaitlistEntry {
   id: string
   full_name: string
   email: string
-  interest?: string
+  learning_goal?: string
   status: WaitlistStatus
   invite_sent_at?: string
   created_at: string

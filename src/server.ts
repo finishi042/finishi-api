@@ -13,7 +13,7 @@ import healthRoutes from './shared/routes/health.js'
 import webhookRoutes from './shared/routes/webhooks.js'
 
 // Auth module (public — signup, login, logout, refresh)
-import { authRoutes, adminAuthRoutes } from './auth/index.js'
+import { authRoutes, adminAuthRoutes, googleAuthRoutes } from './auth/index.js'
 
 // Domain modules
 import { userRoutes } from './user/index.js'
@@ -44,6 +44,8 @@ const envSchema = {
     SUPABASE_SERVICE_ROLE_KEY: { type: 'string' },
     SUPABASE_JWT_SECRET: { type: 'string' },
     ALLOWED_ORIGINS: { type: 'string', default: 'http://localhost:5173,http://localhost:5174' },
+    GOOGLE_REDIRECT_URL: { type: 'string', default: '' },
+    FRONTEND_URL: { type: 'string', default: 'http://localhost:5173' },
   },
 }
 
@@ -75,6 +77,8 @@ declare module 'fastify' {
       SUPABASE_SERVICE_ROLE_KEY: string
       SUPABASE_JWT_SECRET: string
       ALLOWED_ORIGINS: string
+      GOOGLE_REDIRECT_URL: string
+      FRONTEND_URL: string
     }
   }
 }
@@ -105,6 +109,7 @@ async function start() {
     // Auth routes (public — no authenticate middleware)
     await fastify.register(authRoutes, { prefix: '/api/v1/auth' })
     await fastify.register(adminAuthRoutes, { prefix: '/api/v1/auth' })
+    await fastify.register(googleAuthRoutes, { prefix: '/api/v1/auth' })
 
     // User-facing domain routes
     await fastify.register(userRoutes, { prefix: '/api/v1/user' })

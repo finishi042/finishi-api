@@ -8,6 +8,7 @@ import learningLessonsRoutes from './routes/lessons.js'
 import learningPathRoutes from './routes/learning-path.js'
 import learningProgressRoutes from './routes/progress.js'
 import learningQuizzesRoutes from './routes/quizzes.js'
+import learningSkillsRoutes from './routes/skills.js'
 
 /**
  * Learning routes aggregator.
@@ -23,6 +24,7 @@ const learningRoutes: FastifyPluginAsync = async (fastify) => {
   await fastify.register(learningPathRoutes)
   await fastify.register(learningProgressRoutes)
   await fastify.register(learningQuizzesRoutes)
+  await fastify.register(learningSkillsRoutes)
 }
 
 export default learningRoutes

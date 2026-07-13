@@ -16,7 +16,7 @@ const adminWaitlistRoutes: FastifyPluginAsync = async (fastify) => {
     if (q.success) {
       if (q.data.status && q.data.status !== 'all') query = query.eq('status', q.data.status)
       if (q.data.search)
-        query = query.or(`email.ilike.%${q.data.search}%,full_name.ilike.%${q.data.search}%`)
+        query = query.or(`email.ilike.%${q.data.search}%`)
     }
 
     const { data, error, count } = await query
