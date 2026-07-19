@@ -1,2 +1,5 @@
 export { StubPaymentAdapter } from './stub.js'
 export { StripePaymentAdapter } from './stripe.js'
+export { PaddlePaymentAdapter } from './paddle.js'
+export { PaystackPaymentAdapter } from './paystack.js'
+export { FlutterwavePaymentAdapter } from './flutterwave.js'

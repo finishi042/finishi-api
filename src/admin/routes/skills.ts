@@ -11,7 +11,25 @@ const adminSkillsRoutes: FastifyPluginAsync = async (fastify) => {
       .select('*')
       .order('learner_count', { ascending: false })
     if (error) throw error
-    return reply.send(formatResponse(data as Skill[]))
+
+    // Calculate real lesson counts from the lessons table
+    const skills = data as Skill[]
+    if (skills.length > 0) {
+      const { data: counts } = await request.supabase
+        .from('lessons')
+        .select('skill_name')
+
+      const countMap: Record<string, number> = {}
+      for (const row of counts ?? []) {
+        countMap[row.skill_name] = (countMap[row.skill_name] ?? 0) + 1
+      }
+
+      for (const skill of skills) {
+        (skill as any).lesson_count = countMap[skill.name] ?? 0
+      }
+    }
+
+    return reply.send(formatResponse(skills))
   }))
 
   /** POST /skills */
@@ -56,8 +74,26 @@ const adminSkillsRoutes: FastifyPluginAsync = async (fastify) => {
   /** DELETE /skills/:id */
   fastify.delete<{ Params: { id: string } }>('/skills/:id', wrapHandler('Failed to delete skill', async (request, reply) => {
     const { id } = request.params as { id: string }
+
+    // First check if the skill exists
+    const { data: existing } = await request.supabase
+      .from('skills')
+      .select('id')
+      .eq('id', id)
+      .single()
+
+    if (!existing) {
+      return reply.code(404).send(formatError('Skill not found', 'NOT_FOUND'))
+    }
+
     const { error } = await request.supabase.from('skills').delete().eq('id', id)
-    if (error) throw error
+    if (error) {
+      request.log.error({ error, id }, 'Failed to delete skill')
+      if (error.code === '23503') {
+        return reply.code(409).send(formatError('Cannot delete skill — it has dependent records. Remove related lessons and learning paths first.', 'FK_CONSTRAINT'))
+      }
+      throw error
+    }
     return reply.send(formatResponse({ deleted: true }))
   }))
 }

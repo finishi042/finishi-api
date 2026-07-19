@@ -4,6 +4,7 @@ import { requireUser } from '../shared/middleware/rbac.js'
 import { formatResponse, formatError, wrapHandler } from '../shared/handler.js'
 import { getSubscriptionService } from './provider.js'
 import { PLANS, type BillingInterval } from './types.js'
+import { getPlans } from './plans.js'
 import { CheckoutSchema, CancelSubscriptionSchema } from './schemas.js'
 
 const userSubscriptionRoutes: FastifyPluginAsync = async (fastify) => {
@@ -16,12 +17,34 @@ const userSubscriptionRoutes: FastifyPluginAsync = async (fastify) => {
     const service = getSubscriptionService()
     const subscription = await service.getSubscription(userId)
 
+    // Load plans from DB (falls back to hardcoded PLANS if DB unavailable)
+    let plans: unknown
+    try {
+      const dbPlans = await getPlans()
+      plans = dbPlans.length > 0 ? dbPlans : PLANS
+    } catch {
+      plans = PLANS
+    }
+
     return reply.send(
       formatResponse({
         subscription,
-        plans: PLANS,
+        plans,
       })
     )
+  }))
+
+  /** GET /subscription/plans — Get available plans (for pricing page) */
+  fastify.get('/subscription/plans', wrapHandler('Failed to fetch plans', async (_request, reply) => {
+    let plans: unknown
+    try {
+      const dbPlans = await getPlans()
+      plans = dbPlans.length > 0 ? dbPlans : Object.values(PLANS)
+    } catch {
+      plans = Object.values(PLANS)
+    }
+
+    return reply.send(formatResponse(plans))
   }))
 
   /** POST /subscription/checkout — Create a checkout session to upgrade */

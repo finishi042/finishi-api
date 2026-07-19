@@ -12,6 +12,7 @@
     "lint": "eslint src --ext .ts",
     "seed": "tsx scripts/seed.ts",
     "seed:admin": "tsx scripts/seed-admin.ts",
+    "seed:graph": "tsx scripts/seed-skill-graph.ts",
     "migrate": "tsx scripts/run-migrations.ts",
     "cleanup": "echo 'Run scripts/cleanup.sql in Supabase SQL Editor'"
   },

@@ -52,6 +52,38 @@ const learningSkillsRoutes: FastifyPluginAsync = async (fastify) => {
     if (error) throw error
     return reply.send(formatResponse(data))
   }))
+
+  /** GET /skills/:name/courses — List published courses for a skill */
+  fastify.get<{ Params: { name: string } }>('/skills/:name/courses', wrapHandler('Failed to fetch courses for skill', async (request, reply) => {
+    const { name } = request.params as { name: string }
+
+    const { data: courses, error } = await request.supabase
+      .from('courses')
+      .select('*')
+      .eq('skill_name', decodeURIComponent(name))
+      .eq('published', true)
+      .order('order_index', { ascending: true })
+
+    if (error) throw error
+
+    // Get real lesson counts
+    const courseIds = (courses ?? []).map((c: any) => c.id)
+    let lessonCounts: Record<string, number> = {}
+    if (courseIds.length > 0) {
+      const { data: lessonRows } = await request.supabase
+        .from('lessons')
+        .select('course_id')
+        .in('course_id', courseIds)
+        .eq('status', 'published')
+
+      for (const row of lessonRows ?? []) {
+        if (row.course_id) lessonCounts[row.course_id] = (lessonCounts[row.course_id] ?? 0) + 1
+      }
+    }
+
+    const result = (courses ?? []).map((c: any) => ({ ...c, lesson_count: lessonCounts[c.id] ?? 0 }))
+    return reply.send(formatResponse(result))
+  }))
 }
 
 export default learningSkillsRoutes

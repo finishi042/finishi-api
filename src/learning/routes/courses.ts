@@ -47,7 +47,7 @@ const learningCoursesRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send(formatResponse(data))
   }))
 
-  /** GET /courses/:id — Get course details */
+  /** GET /courses/:id — Get course details with lessons */
   fastify.get<{ Params: { id: string } }>('/courses/:id', wrapHandler('Failed to fetch course', async (request, reply) => {
     const { id } = request.params as { id: string }
     const { data, error } = await request.supabase
@@ -61,7 +61,16 @@ const learningCoursesRoutes: FastifyPluginAsync = async (fastify) => {
       if (error.code === 'PGRST116') return reply.code(404).send(formatError('Course not found'))
       throw error
     }
-    return reply.send(formatResponse(data as Course))
+
+    // Fetch lessons for this course
+    const { data: lessons } = await request.supabase
+      .from('lessons')
+      .select('id, title, description, duration_mins, status, order_index, view_count')
+      .eq('course_id', id)
+      .eq('status', 'published')
+      .order('order_index', { ascending: true })
+
+    return reply.send(formatResponse({ ...(data as Course), lessons: lessons ?? [] }))
   }))
 
   /** POST /courses/:id/enroll — Enroll in a course */

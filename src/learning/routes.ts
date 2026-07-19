@@ -9,6 +9,13 @@ import learningPathRoutes from './routes/learning-path.js'
 import learningProgressRoutes from './routes/progress.js'
 import learningQuizzesRoutes from './routes/quizzes.js'
 import learningSkillsRoutes from './routes/skills.js'
+import lessonAttemptsRoutes from './routes/lesson-attempts.js'
+import personalizationRoutes from './routes/personalization.js'
+import onboardingRoutes from './routes/onboarding.js'
+import capstoneRoutes from './routes/capstone.js'
+import completionRoutes from './routes/completion.js'
+import assistantRoutes from './routes/assistant.js'
+import conceptChecklistRoutes from './routes/concept-checklist.js'
 
 /**
  * Learning routes aggregator.
@@ -25,6 +32,13 @@ const learningRoutes: FastifyPluginAsync = async (fastify) => {
   await fastify.register(learningProgressRoutes)
   await fastify.register(learningQuizzesRoutes)
   await fastify.register(learningSkillsRoutes)
+  await fastify.register(lessonAttemptsRoutes)
+  await fastify.register(personalizationRoutes)
+  await fastify.register(onboardingRoutes)
+  await fastify.register(capstoneRoutes)
+  await fastify.register(completionRoutes)
+  await fastify.register(assistantRoutes)
+  await fastify.register(conceptChecklistRoutes)
 }
 
 export default learningRoutes

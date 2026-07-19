@@ -7,10 +7,12 @@ import './types/request.js'
 
 // Shared plugins
 import { corsPlugin, supabasePlugin, authPlugin, rateLimitPlugin } from './shared/plugins/index.js'
+import aiPlugin from './ai/plugin.js'
 
 // Shared routes
 import healthRoutes from './shared/routes/health.js'
 import webhookRoutes from './shared/routes/webhooks.js'
+import publicCompletionRoutes from './shared/routes/public-completion.js'
 
 // Auth module (public — signup, login, logout, refresh)
 import { authRoutes, adminAuthRoutes, googleAuthRoutes } from './auth/index.js'
@@ -46,6 +48,13 @@ const envSchema = {
     ALLOWED_ORIGINS: { type: 'string', default: 'http://localhost:5173,http://localhost:5174' },
     GOOGLE_REDIRECT_URL: { type: 'string', default: '' },
     FRONTEND_URL: { type: 'string', default: 'http://localhost:5173' },
+    PAYMENT_ENCRYPTION_KEY: { type: 'string', default: '' },
+    AI_PROVIDER: { type: 'string', default: 'mock' },
+    AI_API_KEY: { type: 'string', default: '' },
+    AI_MODEL: { type: 'string', default: '' },
+    AI_BASE_URL: { type: 'string', default: '' },
+    AI_MAX_TOKENS: { type: 'string', default: '2048' },
+    AI_TEMPERATURE: { type: 'string', default: '0.7' },
   },
 }
 
@@ -79,6 +88,13 @@ declare module 'fastify' {
       ALLOWED_ORIGINS: string
       GOOGLE_REDIRECT_URL: string
       FRONTEND_URL: string
+      PAYMENT_ENCRYPTION_KEY: string
+      AI_PROVIDER: string
+      AI_API_KEY: string
+      AI_MODEL: string
+      AI_BASE_URL: string
+      AI_MAX_TOKENS: string
+      AI_TEMPERATURE: string
     }
   }
 }
@@ -99,12 +115,14 @@ async function start() {
     await fastify.register(fastifyCookie)
     await fastify.register(supabasePlugin)
     await fastify.register(authPlugin)
+    await fastify.register(aiPlugin)
 
     // ── Routes ──────────────────────────────────────────────────────────
 
     // Public / shared
     await fastify.register(healthRoutes)
     await fastify.register(webhookRoutes, { prefix: '/api/v1' })
+    await fastify.register(publicCompletionRoutes, { prefix: '/api/v1/public' })
 
     // Auth routes (public — no authenticate middleware)
     await fastify.register(authRoutes, { prefix: '/api/v1/auth' })

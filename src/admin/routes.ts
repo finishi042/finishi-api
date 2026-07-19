@@ -8,10 +8,16 @@ import adminAnalyticsRoutes from './routes/analytics.js'
 import adminSkillsRoutes from './routes/skills.js'
 import adminLessonsRoutes from './routes/lessons.js'
 import adminLearningPathsRoutes from './routes/learning-paths.js'
+import adminLearningPathCoursesRoutes from './routes/learning-path-courses.js'
+import adminCoursesRoutes from './routes/courses.js'
+import adminQuizzesRoutes from './routes/quizzes.js'
+import adminBroadcastRoutes from './routes/broadcast.js'
 import adminEventsRoutes from './routes/events.js'
 import adminWaitlistRoutes from './routes/waitlist.js'
 import adminImpressionsRoutes from './routes/impressions.js'
 import adminNotificationRoutes from './notifications/routes.js'
+import adminPaymentConfigRoutes from './routes/payment-config.js'
+import adminSubscriptionPlansRoutes from './routes/subscription-plans.js'
 
 /**
  * Admin routes aggregator.
@@ -27,10 +33,16 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   await fastify.register(adminSkillsRoutes)
   await fastify.register(adminLessonsRoutes)
   await fastify.register(adminLearningPathsRoutes)
+  await fastify.register(adminLearningPathCoursesRoutes)
+  await fastify.register(adminCoursesRoutes)
+  await fastify.register(adminQuizzesRoutes)
+  await fastify.register(adminBroadcastRoutes)
   await fastify.register(adminEventsRoutes)
   await fastify.register(adminWaitlistRoutes)
   await fastify.register(adminImpressionsRoutes)
   await fastify.register(adminNotificationRoutes)
+  await fastify.register(adminPaymentConfigRoutes)
+  await fastify.register(adminSubscriptionPlansRoutes)
 }
 
 export default adminRoutes

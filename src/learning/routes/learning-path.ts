@@ -4,7 +4,8 @@ import { formatResponse, wrapHandler } from '../../shared/handler.js'
 const learningPathRoutes: FastifyPluginAsync = async (fastify) => {
   /**
    * GET /learning-path
-   * Returns the user's active learning path with phases, lessons, and progress
+   * Returns the user's active learning path with courses, their lessons, and progress.
+   * New hierarchy: Learning Path → Courses → Lessons
    */
   fastify.get('/learning-path', wrapHandler('Failed to fetch learning path', async (request, reply) => {
     const userId = request.user!.id
@@ -15,6 +16,7 @@ const learningPathRoutes: FastifyPluginAsync = async (fastify) => {
       .select('*, learning_path:learning_paths(id, name, description, skill_name)')
       .eq('user_id', userId)
       .is('completed_at', null)
+      .not('learning_path_id', 'is', null)
       .order('enrolled_at', { ascending: false })
       .limit(1)
       .single()
@@ -22,17 +24,37 @@ const learningPathRoutes: FastifyPluginAsync = async (fastify) => {
     if (enrollErr && enrollErr.code !== 'PGRST116') throw enrollErr
 
     if (!enrollment) {
-      return reply.send(formatResponse({ enrollment: null, phases: [], overall_progress: 0 }))
+      return reply.send(formatResponse({ enrollment: null, courses: [], overall_progress: 0, total_lessons: 0, completed_lessons: 0 }))
     }
 
-    // Get phases with lessons for this learning path
-    const { data: phases, error: phasesErr } = await request.supabase
-      .from('learning_path_phases')
-      .select('*, lessons:learning_path_phase_lessons(*, lesson:lessons(id, title, duration_mins, description))')
+    // Get courses in this learning path
+    const { data: pathCourses, error: pcErr } = await request.supabase
+      .from('learning_path_courses')
+      .select(`
+        id, course_id, order_index,
+        courses:course_id ( id, title, description, skill_name, level, published )
+      `)
       .eq('learning_path_id', enrollment.learning_path_id)
       .order('order_index', { ascending: true })
 
-    if (phasesErr) throw phasesErr
+    if (pcErr) throw pcErr
+
+    // Get lessons for each course
+    const courseIds = (pathCourses ?? []).map((pc: any) => pc.course_id)
+    let lessonsMap: Record<string, any[]> = {}
+    if (courseIds.length > 0) {
+      const { data: lessons } = await request.supabase
+        .from('lessons')
+        .select('id, title, duration_mins, description, status, course_id, order_index')
+        .in('course_id', courseIds)
+        .eq('status', 'published')
+        .order('order_index', { ascending: true })
+
+      for (const lesson of lessons ?? []) {
+        if (!lessonsMap[lesson.course_id]) lessonsMap[lesson.course_id] = []
+        lessonsMap[lesson.course_id].push(lesson)
+      }
+    }
 
     // Get user's completed lessons
     const { data: completedProgress } = await request.supabase
@@ -43,20 +65,28 @@ const learningPathRoutes: FastifyPluginAsync = async (fastify) => {
 
     const completedLessonIds = new Set((completedProgress ?? []).map((p: any) => p.lesson_id))
 
-    const totalLessons = (phases ?? []).reduce(
-      (sum: number, p: any) => sum + (p.lessons?.length ?? 0),
-      0
-    )
-    const completedCount = (phases ?? []).reduce(
-      (sum: number, p: any) =>
-        sum + (p.lessons ?? []).filter((l: any) => completedLessonIds.has(l.lesson_id)).length,
-      0
-    )
+    // Build response with courses and their lessons
+    const courses = (pathCourses ?? []).map((pc: any) => {
+      const courseLessons = lessonsMap[pc.course_id] ?? []
+      const completedInCourse = courseLessons.filter((l: any) => completedLessonIds.has(l.id)).length
+      return {
+        id: pc.id,
+        course_id: pc.course_id,
+        order_index: pc.order_index,
+        course: pc.courses,
+        lessons: courseLessons,
+        lesson_count: courseLessons.length,
+        completed_count: completedInCourse,
+      }
+    })
+
+    const totalLessons = courses.reduce((sum, c) => sum + c.lesson_count, 0)
+    const completedCount = courses.reduce((sum, c) => sum + c.completed_count, 0)
 
     return reply.send(
       formatResponse({
         enrollment,
-        phases: phases ?? [],
+        courses,
         completed_lesson_ids: [...completedLessonIds],
         overall_progress: totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0,
         total_lessons: totalLessons,

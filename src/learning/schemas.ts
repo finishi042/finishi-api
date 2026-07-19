@@ -15,6 +15,16 @@ export const SubmitQuizSchema = z.object({
   ).min(1),
 })
 
+export const RecordLessonAttemptSchema = z.object({
+  lesson_id: z.string().uuid(),
+  node_id: z.string().uuid().optional(),
+  quiz_score: z.number().int().min(0).max(100).optional(),
+  time_spent_secs: z.number().int().min(0).default(0),
+  hints_used: z.number().int().min(0).default(0),
+  reflection: z.string().max(2000).optional(),
+  completed: z.boolean().default(false),
+})
+
 export const CreateSkillSchema = z.object({
   name: z.string().min(1).max(80),
   description: z.string().max(500).optional().default(''),
@@ -26,8 +36,10 @@ export const UpdateSkillSchema = CreateSkillSchema.partial()
 export const CreateLessonSchema = z.object({
   title: z.string().min(1).max(200),
   skill_name: z.string().min(1).max(80),
+  course_id: z.string().uuid().optional(),
   description: z.string().max(1000).optional().default(''),
   duration_mins: z.number().int().min(1).max(480),
+  order_index: z.number().int().min(0).optional(),
   status: z.preprocess(
     (v) => typeof v === 'string' ? v.toLowerCase() : v,
     z.enum(['published', 'draft']).default('draft')
@@ -40,7 +52,25 @@ export const UpdateLessonSchema = CreateLessonSchema.partial()
 
 export const LessonQuerySchema = z.object({
   skill: z.string().optional(),
+  course_id: z.string().uuid().optional(),
   status: z.enum(['published', 'draft']).optional(),
+  search: z.string().max(100).optional(),
+})
+
+export const CreateCourseSchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().max(1000).optional().default(''),
+  skill_name: z.string().min(1).max(80),
+  level: z.enum(['beginner', 'intermediate', 'advanced']).optional().default('beginner'),
+  published: z.boolean().optional().default(false),
+  order_index: z.number().int().min(0).optional(),
+})
+
+export const UpdateCourseSchema = CreateCourseSchema.partial()
+
+export const CourseQuerySchema = z.object({
+  skill: z.string().optional(),
+  published: z.enum(['true', 'false']).optional(),
   search: z.string().max(100).optional(),
 })
 

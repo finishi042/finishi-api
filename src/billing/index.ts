@@ -1,4 +1,7 @@
 export * from './types.js'
 export * from './adapters/index.js'
 export { SubscriptionService } from './service.js'
-export { getPaymentAdapter, getSubscriptionService } from './provider.js'
+export { getPaymentAdapter, getSubscriptionService, getGatewayRouter, refreshGatewayRouter } from './provider.js'
+export { PaymentGatewayRouter, generateIdempotencyKey, isLocalCountry } from './gateway-router.js'
+export { getPlans, getPlanBySlug, getDefaultPlan, refreshPlansCache, getPlansAsLegacyConfig, hasPlanAccess } from './plans.js'
+export type { SubscriptionPlanRecord } from './plans.js'
