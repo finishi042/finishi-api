@@ -26,6 +26,7 @@ import { eventsRoutes } from './events/index.js'
 import { notificationsRoutes } from './notifications/index.js'
 import { focusRoutes } from './focus/index.js'
 import { adminRoutes } from './admin/index.js'
+import { onboardingRoutes } from './onboarding/index.js'
 
 // AI chat routes
 import aiChatRoutes from './ai/routes.js'
@@ -157,6 +158,7 @@ async function start() {
     await fastify.register(notificationsRoutes, { prefix: '/api/v1/user' })
     await fastify.register(focusRoutes, { prefix: '/api/v1/user' })
     await fastify.register(userSubscriptionRoutes, { prefix: '/api/v1/user' })
+    await fastify.register(onboardingRoutes, { prefix: '/api/v1/user' })
 
     // AI routes (authenticated)
     await fastify.register(aiChatRoutes, { prefix: '/api/v1/ai' })
