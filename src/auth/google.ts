@@ -16,14 +16,7 @@
  */
 import type { FastifyPluginAsync } from 'fastify'
 import { getSupabase } from '../shared/supabase.js'
-import { provisionUser } from './onboarding.js'
-import { notifyAdminUserSignup } from '../admin/notifications/emitter.js'
-import {
-  COOKIE_NAME,
-  REFRESH_COOKIE_NAME,
-  sessionCookieOptions,
-  refreshCookieOptions,
-} from './cookie.js'
+import { establishSession } from './session.js'
 
 const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173'
 
@@ -137,34 +130,24 @@ const googleAuthRoutes: FastifyPluginAsync = async (fastify) => {
       })
     }
 
-    // Provision user in application database (no-op if already exists)
-    try {
-      await provisionUser({
+    // Determine if this is a new user (created within the last 60s)
+    const createdAt = new Date(user.created_at)
+    const isNewUser = Date.now() - createdAt.getTime() < 60_000
+
+    // Establish session: provision user, set cookies, notify admins if new
+    await establishSession(reply, request, {
+      accessToken,
+      refreshToken,
+      user: {
         id: user.id,
         email: user.email!,
         full_name: (user.user_metadata?.full_name as string) ?? (user.user_metadata?.name as string) ?? undefined,
         avatar_url: (user.user_metadata?.avatar_url as string) ?? (user.user_metadata?.picture as string) ?? undefined,
-      })
-    } catch (err) {
-      request.log.error({ err, userId: user.id }, 'Failed to provision Google OAuth user')
-    }
-
-    // Set httpOnly session cookies
-    reply.setCookie(COOKIE_NAME, accessToken, sessionCookieOptions())
-    reply.setCookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions())
+      },
+      isNewUser,
+    })
 
     request.log.info({ userId: user.id, email: user.email }, 'User signed in via Google')
-
-    // Notify admins for new users
-    const createdAt = new Date(user.created_at)
-    const isNewUser = Date.now() - createdAt.getTime() < 60_000
-    if (isNewUser) {
-      notifyAdminUserSignup(
-        user.id,
-        user.email!,
-        (user.user_metadata?.full_name as string) ?? (user.user_metadata?.name as string)
-      )
-    }
 
     return reply.send({ success: true, redirect: `${FRONTEND_URL}/` })
   }

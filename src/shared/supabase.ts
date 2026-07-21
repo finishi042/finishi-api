@@ -1,8 +1,12 @@
 /**
- * Supabase client initialisation and API response formatting utilities.
+ * Supabase client initialisation.
  * Auth logic lives in ./auth.ts (SRP).
+ * Response formatting lives in ./response.ts (SRP).
  */
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+
+// Re-export response utilities for backward compatibility
+export { formatResponse, formatError } from './response.js'
 
 let supabaseInstance: SupabaseClient | null = null
 
@@ -29,18 +33,4 @@ export function getSupabase(): SupabaseClient {
     throw new Error('Supabase client not initialized. Call initSupabase first.')
   }
   return supabaseInstance
-}
-
-/**
- * Format a successful API response.
- */
-export function formatResponse<T>(data: T, success = true) {
-  return { success, data }
-}
-
-/**
- * Format an error API response.
- */
-export function formatError(message: string, code?: string) {
-  return { success: false, error: { message, code } }
 }

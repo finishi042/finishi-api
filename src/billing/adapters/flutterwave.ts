@@ -1,12 +1,11 @@
 import type {
-  PaymentProviderAdapter,
   CreateCheckoutParams,
   CheckoutResult,
   CancelSubscriptionParams,
   WebhookEvent,
   Plan,
 } from '../types.js'
-import { createProviderFetch } from '../../monitoring/tracked-fetch.js'
+import { BasePaymentAdapter } from './base.js'
 
 /**
  * Flutterwave adapter — failover provider for local (African) payments.
@@ -29,34 +28,17 @@ interface FlutterwaveConfig {
 
 const FLUTTERWAVE_API_BASE = 'https://api.flutterwave.com/v3'
 
-export class FlutterwavePaymentAdapter implements PaymentProviderAdapter {
+export class FlutterwavePaymentAdapter extends BasePaymentAdapter {
   readonly name = 'flutterwave'
+  protected readonly baseUrl = FLUTTERWAVE_API_BASE
+  protected readonly secretKey: string
+
   private config: FlutterwaveConfig
-  private trackedFetch: ReturnType<typeof createProviderFetch>
 
   constructor(config: FlutterwaveConfig) {
+    super('flutterwave')
     this.config = config
-    this.trackedFetch = createProviderFetch('flutterwave')
-  }
-
-  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
-    const res = await this.trackedFetch(`${FLUTTERWAVE_API_BASE}${path}`, {
-      method,
-      headers: {
-        'Authorization': `Bearer ${this.config.secretKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    })
-
-    const json: any = await res.json()
-
-    if (!res.ok || json.status === 'error') {
-      const errMsg = json?.message ?? `Flutterwave API ${res.status}`
-      throw new Error(`Flutterwave error: ${errMsg}`)
-    }
-
-    return json.data as T
+    this.secretKey = config.secretKey
   }
 
   async createCheckout(params: CreateCheckoutParams): Promise<CheckoutResult> {
@@ -91,7 +73,12 @@ export class FlutterwavePaymentAdapter implements PaymentProviderAdapter {
       throw new Error(`No Flutterwave plan configured for ${params.plan}_${params.interval}`)
     }
 
-    const data = await this.request<any>('POST', '/payments', payload)
+    const data = await this.request<any>(
+      'POST',
+      '/payments',
+      payload,
+      (json, res) => res.ok && json.status !== 'error'
+    )
 
     return {
       checkout_url: data.link,
@@ -101,78 +88,55 @@ export class FlutterwavePaymentAdapter implements PaymentProviderAdapter {
 
   async cancelSubscription(params: CancelSubscriptionParams): Promise<void> {
     // Flutterwave cancels subscriptions via PUT /subscriptions/:id/cancel
-    await this.request('PUT', `/subscriptions/${params.provider_subscription_id}/cancel`, {})
+    await this.request(
+      'PUT',
+      `/subscriptions/${params.provider_subscription_id}/cancel`,
+      {},
+      (json, res) => res.ok && json.status !== 'error'
+    )
   }
 
   async parseWebhook(headers: Record<string, string>, body: string | Buffer): Promise<WebhookEvent> {
     const rawBody = typeof body === 'string' ? body : body.toString('utf8')
 
     // Layer 1: Verify webhook hash (basic auth)
-    this.verifySignature(headers)
+    this.verifyWebhookHash(headers)
 
     const payload = JSON.parse(rawBody)
     const data = payload.data ?? {}
 
     // Layer 2: Verify transaction with Flutterwave API (server-to-server confirmation)
-    // This ensures the event is genuine even if the hash leaks
     if (data.id && payload.event === 'charge.completed') {
-      await this.verifyTransaction(data.id, data.amount, data.currency)
+      await this.verifyTransaction({
+        url: `${FLUTTERWAVE_API_BASE}/transactions/${data.id}/verify`,
+        authHeader: `Bearer ${this.config.secretKey}`,
+        statusPath: 'data.status',
+        successValue: 'successful',
+        amountPath: 'data.amount',
+        currencyPath: 'data.currency',
+        expectedAmount: data.amount,
+        expectedCurrency: data.currency,
+        providerLabel: 'Flutterwave',
+        transactionId: String(data.id),
+      })
     }
 
     return this.normalizeEvent(payload)
   }
 
-  /**
-   * Server-to-server transaction verification.
-   * Calls Flutterwave's /transactions/:id/verify endpoint to confirm:
-   *   1. The transaction actually exists on Flutterwave's side
-   *   2. The amount and currency match what we expect
-   *   3. The status is truly "successful"
-   *
-   * This is the recommended security approach from Flutterwave's docs:
-   * https://developer.flutterwave.com/docs/integration-guides/verify-transactions
-   */
-  private async verifyTransaction(transactionId: number | string, expectedAmount?: number, expectedCurrency?: string): Promise<void> {
-    const res = await fetch(`${FLUTTERWAVE_API_BASE}/transactions/${transactionId}/verify`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${this.config.secretKey}`,
-      },
-    })
-
-    if (!res.ok) {
-      throw new Error(`Flutterwave transaction verification failed: HTTP ${res.status}`)
-    }
-
-    const json: any = await res.json()
-
-    if (json.status !== 'success' || json.data?.status !== 'successful') {
-      throw new Error(`Flutterwave transaction ${transactionId} is not successful (status: ${json.data?.status ?? 'unknown'})`)
-    }
-
-    // Verify amount matches (prevents amount tampering)
-    if (expectedAmount !== undefined && json.data.amount !== expectedAmount) {
-      throw new Error(`Flutterwave amount mismatch: expected ${expectedAmount}, got ${json.data.amount}`)
-    }
-
-    // Verify currency matches
-    if (expectedCurrency && json.data.currency !== expectedCurrency.toUpperCase()) {
-      throw new Error(`Flutterwave currency mismatch: expected ${expectedCurrency}, got ${json.data.currency}`)
-    }
-  }
+  // ── Private helpers ─────────────────────────────────────────────────────
 
   /**
    * Flutterwave webhook verification.
    * Flutterwave sends a `verif-hash` header that must match your configured webhook hash.
    * Uses timing-safe comparison to prevent timing attacks.
    */
-  private verifySignature(headers: Record<string, string>): void {
+  private verifyWebhookHash(headers: Record<string, string>): void {
     const hash = headers['verif-hash']
     if (!hash) {
       throw new Error('Missing verif-hash header')
     }
 
-    // Timing-safe comparison
     const { timingSafeEqual } = require('node:crypto')
     const hashBuffer = Buffer.from(hash)
     const expectedBuffer = Buffer.from(this.config.webhookHash)
@@ -208,20 +172,13 @@ export class FlutterwavePaymentAdapter implements PaymentProviderAdapter {
     }
 
     // Determine subscription ID
-    // For charge.completed, it might be in data.plan_id or data.tx_ref
     const subscriptionId = data.id?.toString() ?? data.tx_ref ?? null
 
     // Determine current_period_end from plan details
     let currentPeriodEnd: string | null = null
     if (data.created_at) {
-      const createdAt = new Date(data.created_at)
       const interval = meta.interval ?? 'monthly'
-      if (interval === 'yearly') {
-        createdAt.setFullYear(createdAt.getFullYear() + 1)
-      } else {
-        createdAt.setMonth(createdAt.getMonth() + 1)
-      }
-      currentPeriodEnd = createdAt.toISOString()
+      currentPeriodEnd = this.calculatePeriodEnd(new Date(data.created_at), interval)
     }
 
     // For charge.completed, infer subscription.created if it has a payment_plan

@@ -7,8 +7,6 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { formatResponse, formatError } from '../shared/supabase.js'
 import { getSupabase } from '../shared/supabase.js'
-import { provisionUser } from './onboarding.js'
-import { notifyAdminUserSignup } from '../admin/notifications/emitter.js'
 import {
   SignupSchema,
   LoginSchema,
@@ -23,8 +21,8 @@ import {
   REFRESH_COOKIE_NAME,
   sessionCookieOptions,
   refreshCookieOptions,
-  clearCookieOptions,
 } from './cookie.js'
+import { establishSession, clearSession } from './session.js'
 
 const authRoutes: FastifyPluginAsync = async (fastify) => {
   /**
@@ -55,8 +53,6 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
     const user = authData.user
 
-    await provisionUser({ id: user.id, email: user.email!, full_name })
-
     const { data: session, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -68,13 +64,14 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.code(201).send(formatResponse(output))
     }
 
-    reply.setCookie(COOKIE_NAME, session.session.access_token, sessionCookieOptions())
-    reply.setCookie(REFRESH_COOKIE_NAME, session.session.refresh_token, refreshCookieOptions())
+    await establishSession(reply, request, {
+      accessToken: session.session.access_token,
+      refreshToken: session.session.refresh_token,
+      user: { id: user.id, email: user.email!, full_name },
+      isNewUser: true,
+    })
 
     request.log.info({ userId: user.id }, 'User signed up and logged in')
-
-    // Notify admins
-    notifyAdminUserSignup(user.id, user.email!, full_name)
 
     const output = SignupOutput.parse({ user_id: user.id, email: user.email, full_name: full_name ?? null })
     return reply.code(201).send(formatResponse(output))
@@ -101,15 +98,17 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
     const { session, user } = data
 
-    await provisionUser({
-      id: user.id,
-      email: user.email!,
-      full_name: (user.user_metadata?.full_name as string) ?? undefined,
-      avatar_url: (user.user_metadata?.avatar_url as string) ?? undefined,
+    await establishSession(reply, request, {
+      accessToken: session.access_token,
+      refreshToken: session.refresh_token,
+      user: {
+        id: user.id,
+        email: user.email!,
+        full_name: (user.user_metadata?.full_name as string) ?? undefined,
+        avatar_url: (user.user_metadata?.avatar_url as string) ?? undefined,
+      },
+      isNewUser: false,
     })
-
-    reply.setCookie(COOKIE_NAME, session.access_token, sessionCookieOptions())
-    reply.setCookie(REFRESH_COOKIE_NAME, session.refresh_token, refreshCookieOptions())
 
     request.log.info({ userId: user.id, email }, 'User logged in')
 
@@ -127,8 +126,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
    * Clear session cookies.
    */
   fastify.post('/logout', async (_request, reply) => {
-    reply.setCookie(COOKIE_NAME, '', clearCookieOptions())
-    reply.setCookie(REFRESH_COOKIE_NAME, '', { ...clearCookieOptions(), path: '/api/v1/auth' })
+    clearSession(reply)
 
     const output = LogoutOutput.parse({ logged_out: true })
     return reply.send(formatResponse(output))
@@ -149,8 +147,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken })
 
     if (error || !data.session) {
-      reply.setCookie(COOKIE_NAME, '', clearCookieOptions())
-      reply.setCookie(REFRESH_COOKIE_NAME, '', { ...clearCookieOptions(), path: '/api/v1/auth' })
+      clearSession(reply)
       return reply.code(401).send(formatError('Refresh token expired or invalid', 'REFRESH_FAILED'))
     }
 

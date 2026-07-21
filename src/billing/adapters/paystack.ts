@@ -1,12 +1,11 @@
 import type {
-  PaymentProviderAdapter,
   CreateCheckoutParams,
   CheckoutResult,
   CancelSubscriptionParams,
   WebhookEvent,
   Plan,
 } from '../types.js'
-import { createProviderFetch } from '../../monitoring/tracked-fetch.js'
+import { BasePaymentAdapter } from './base.js'
 
 /**
  * Paystack adapter — primary local payment provider for African markets.
@@ -27,34 +26,17 @@ interface PaystackConfig {
 
 const PAYSTACK_API_BASE = 'https://api.paystack.co'
 
-export class PaystackPaymentAdapter implements PaymentProviderAdapter {
+export class PaystackPaymentAdapter extends BasePaymentAdapter {
   readonly name = 'paystack'
+  protected readonly baseUrl = PAYSTACK_API_BASE
+  protected readonly secretKey: string
+
   private config: PaystackConfig
-  private trackedFetch: ReturnType<typeof createProviderFetch>
 
   constructor(config: PaystackConfig) {
+    super('paystack')
     this.config = config
-    this.trackedFetch = createProviderFetch('paystack')
-  }
-
-  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
-    const res = await this.trackedFetch(`${PAYSTACK_API_BASE}${path}`, {
-      method,
-      headers: {
-        'Authorization': `Bearer ${this.config.secretKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    })
-
-    const json: any = await res.json()
-
-    if (!res.ok || json.status === false) {
-      const errMsg = json?.message ?? `Paystack API ${res.status}`
-      throw new Error(`Paystack error: ${errMsg}`)
-    }
-
-    return json.data as T
+    this.secretKey = config.secretKey
   }
 
   async createCheckout(params: CreateCheckoutParams): Promise<CheckoutResult> {
@@ -82,7 +64,12 @@ export class PaystackPaymentAdapter implements PaymentProviderAdapter {
       throw new Error(`No Paystack plan configured for ${params.plan}_${params.interval}`)
     }
 
-    const data = await this.request<any>('POST', '/transaction/initialize', payload)
+    const data = await this.request<any>(
+      'POST',
+      '/transaction/initialize',
+      payload,
+      (json, res) => res.ok && json.status !== false
+    )
 
     return {
       checkout_url: data.authorization_url,
@@ -92,73 +79,48 @@ export class PaystackPaymentAdapter implements PaymentProviderAdapter {
 
   async cancelSubscription(params: CancelSubscriptionParams): Promise<void> {
     // Paystack uses subscription codes and email tokens for cancellation.
-    // We need the subscription code and the email token (stored in metadata).
     // The API endpoint is POST /subscription/disable with { code, token }.
-    //
-    // If cancel_at_period_end is true, we disable the subscription (stops renewal).
-    // Paystack doesn't have an "immediate cancel" — disabling stops the next charge.
-
-    await this.request('POST', '/subscription/disable', {
-      code: params.provider_subscription_id,
-      token: '', // Email token is required; should be stored in subscription metadata
-    })
+    // Disabling stops the next charge (no "immediate cancel" concept).
+    await this.request(
+      'POST',
+      '/subscription/disable',
+      {
+        code: params.provider_subscription_id,
+        token: '', // Email token is required; should be stored in subscription metadata
+      },
+      (json, res) => res.ok && json.status !== false
+    )
   }
 
   async parseWebhook(headers: Record<string, string>, body: string | Buffer): Promise<WebhookEvent> {
     const rawBody = typeof body === 'string' ? body : body.toString('utf8')
 
     // Layer 1: Verify HMAC-SHA512 signature
-    this.verifySignature(headers, rawBody)
+    await this.verifySignature(headers, rawBody)
 
     const payload = JSON.parse(rawBody)
     const data = payload.data ?? {}
 
     // Layer 2: Server-to-server verification for charge events
-    // Confirms the transaction exists and amounts match on Paystack's side
     if (data.reference && ['charge.success', 'charge.failed'].includes(payload.event)) {
-      await this.verifyTransaction(data.reference, data.amount, data.currency)
+      await this.verifyTransaction({
+        url: `${PAYSTACK_API_BASE}/transaction/verify/${encodeURIComponent(data.reference)}`,
+        authHeader: `Bearer ${this.config.secretKey}`,
+        statusPath: 'data.status',
+        successValue: 'success',
+        amountPath: 'data.amount',
+        currencyPath: 'data.currency',
+        expectedAmount: data.amount,
+        expectedCurrency: data.currency,
+        providerLabel: 'Paystack',
+        transactionId: data.reference,
+      })
     }
 
     return this.normalizeEvent(payload)
   }
 
-  /**
-   * Server-to-server transaction verification via Paystack's Verify endpoint.
-   * https://paystack.com/docs/api/transaction/#verify
-   *
-   * Confirms:
-   *   1. Transaction exists on Paystack
-   *   2. Status is truly "success"
-   *   3. Amount and currency match the webhook payload (prevents tampering)
-   */
-  private async verifyTransaction(reference: string, expectedAmount?: number, expectedCurrency?: string): Promise<void> {
-    const res = await this.trackedFetch(`${PAYSTACK_API_BASE}/transaction/verify/${encodeURIComponent(reference)}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${this.config.secretKey}`,
-      },
-    })
-
-    if (!res.ok) {
-      throw new Error(`Paystack transaction verification failed: HTTP ${res.status}`)
-    }
-
-    const json: any = await res.json()
-
-    if (json.status !== true || json.data?.status !== 'success') {
-      throw new Error(`Paystack transaction ${reference} not successful (status: ${json.data?.status ?? 'unknown'})`)
-    }
-
-    // Verify amount matches (Paystack amounts are in kobo/pesewas)
-    if (expectedAmount !== undefined && json.data.amount !== expectedAmount) {
-      throw new Error(`Paystack amount mismatch: expected ${expectedAmount}, got ${json.data.amount}`)
-    }
-
-    // Verify currency matches
-    if (expectedCurrency && json.data.currency !== expectedCurrency.toUpperCase()) {
-      throw new Error(`Paystack currency mismatch: expected ${expectedCurrency}, got ${json.data.currency}`)
-    }
-  }
+  // ── Private helpers ─────────────────────────────────────────────────────
 
   /**
    * Paystack signs webhooks with HMAC-SHA512 using the secret key.
@@ -219,15 +181,8 @@ export class PaystackPaymentAdapter implements PaymentProviderAdapter {
     if (data.next_payment_date) {
       currentPeriodEnd = new Date(data.next_payment_date).toISOString()
     } else if (data.paid_at) {
-      // Estimate: paid_at + subscription interval
-      const paidAt = new Date(data.paid_at)
       const interval = meta.interval ?? 'monthly'
-      if (interval === 'yearly') {
-        paidAt.setFullYear(paidAt.getFullYear() + 1)
-      } else {
-        paidAt.setMonth(paidAt.getMonth() + 1)
-      }
-      currentPeriodEnd = paidAt.toISOString()
+      currentPeriodEnd = this.calculatePeriodEnd(new Date(data.paid_at), interval)
     }
 
     return {

@@ -1,5 +1,5 @@
 import type { FastifyRequest, FastifyReply, RouteGenericInterface } from 'fastify'
-import { formatResponse, formatError } from './supabase.js'
+import { formatResponse, formatError } from './response.js'
 
 /**
  * Wraps a route handler with standardised error handling.
