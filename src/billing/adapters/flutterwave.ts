@@ -6,6 +6,7 @@ import type {
   WebhookEvent,
   Plan,
 } from '../types.js'
+import { createProviderFetch } from '../../monitoring/tracked-fetch.js'
 
 /**
  * Flutterwave adapter — failover provider for local (African) payments.
@@ -31,13 +32,15 @@ const FLUTTERWAVE_API_BASE = 'https://api.flutterwave.com/v3'
 export class FlutterwavePaymentAdapter implements PaymentProviderAdapter {
   readonly name = 'flutterwave'
   private config: FlutterwaveConfig
+  private trackedFetch: ReturnType<typeof createProviderFetch>
 
   constructor(config: FlutterwaveConfig) {
     this.config = config
+    this.trackedFetch = createProviderFetch('flutterwave')
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
-    const res = await fetch(`${FLUTTERWAVE_API_BASE}${path}`, {
+    const res = await this.trackedFetch(`${FLUTTERWAVE_API_BASE}${path}`, {
       method,
       headers: {
         'Authorization': `Bearer ${this.config.secretKey}`,

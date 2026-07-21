@@ -8,7 +8,7 @@
 
 // ─── Provider Configuration ────────────────────────────────────────────────
 
-export type AIProviderName = 'openai' | 'huggingface' | 'mock'
+export type AIProviderName = 'openai' | 'huggingface' | 'gemini' | 'groq' | 'openrouter' | 'fallback' | 'mock'
 
 export interface AIProviderConfig {
   provider: AIProviderName

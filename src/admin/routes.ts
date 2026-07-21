@@ -18,6 +18,7 @@ import adminImpressionsRoutes from './routes/impressions.js'
 import adminNotificationRoutes from './notifications/routes.js'
 import adminPaymentConfigRoutes from './routes/payment-config.js'
 import adminSubscriptionPlansRoutes from './routes/subscription-plans.js'
+import adminMonitoringRoutes from './routes/monitoring.js'
 
 /**
  * Admin routes aggregator.
@@ -43,6 +44,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   await fastify.register(adminNotificationRoutes)
   await fastify.register(adminPaymentConfigRoutes)
   await fastify.register(adminSubscriptionPlansRoutes)
+  await fastify.register(adminMonitoringRoutes)
 }
 
 export default adminRoutes

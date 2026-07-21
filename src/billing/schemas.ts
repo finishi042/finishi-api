@@ -17,7 +17,7 @@ const safeUrl = z.string().url().refine(
 )
 
 export const CheckoutSchema = z.object({
-  plan: z.enum(['pro', 'enterprise']),
+  plan: z.string().min(1, 'Plan is required'),
   interval: z.enum(['monthly', 'yearly']).optional().default('monthly'),
   success_url: safeUrl,
   cancel_url: safeUrl,

@@ -19,6 +19,7 @@ import {
   buildCapstoneGradingPrompt,
   buildAssistantPrompt,
 } from '../prompts.js'
+import { monitoredFetch } from '../../monitoring/tracked-fetch.js'
 
 export class OpenAIProvider implements AIProvider {
   readonly name = 'openai' as const
@@ -43,7 +44,7 @@ export class OpenAIProvider implements AIProvider {
       body.response_format = { type: 'json_object' }
     }
 
-    const response = await fetch(url, {
+    const response = await monitoredFetch('openai', url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -3,7 +3,7 @@ import { authenticate } from '../shared/middleware/auth.js'
 import { requireUser } from '../shared/middleware/rbac.js'
 import { formatResponse, formatError, wrapHandler } from '../shared/handler.js'
 import { getSubscriptionService } from './provider.js'
-import { PLANS, type BillingInterval } from './types.js'
+import { PLANS, type BillingInterval, type Plan } from './types.js'
 import { getPlans } from './plans.js'
 import { CheckoutSchema, CancelSubscriptionSchema } from './schemas.js'
 
@@ -56,6 +56,17 @@ const userSubscriptionRoutes: FastifyPluginAsync = async (fastify) => {
 
     const { plan, interval, success_url, cancel_url } = parsed.data
 
+    // Validate the plan exists in the database
+    const plans = await getPlans()
+    const validPlan = plans.find(p => p.slug === plan && p.slug !== 'free')
+    if (!validPlan) {
+      const validSlugs = plans.filter(p => p.slug !== 'free').map(p => p.slug).join(', ')
+      return reply.code(400).send(formatError(
+        `Invalid plan '${plan}'. Available plans: ${validSlugs}`,
+        'INVALID_PLAN'
+      ))
+    }
+
     return wrapHandler('Failed to create checkout', async (req, rep) => {
       const userId = req.user!.id
       const email = req.user!.email ?? ''
@@ -64,7 +75,7 @@ const userSubscriptionRoutes: FastifyPluginAsync = async (fastify) => {
       const result = await service.createCheckout({
         userId,
         email,
-        plan,
+        plan: plan as Plan,
         interval: interval as BillingInterval,
         successUrl: success_url,
         cancelUrl: cancel_url,

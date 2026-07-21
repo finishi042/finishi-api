@@ -6,6 +6,7 @@ import type {
   WebhookEvent,
   Plan,
 } from '../types.js'
+import { createProviderFetch } from '../../monitoring/tracked-fetch.js'
 
 /**
  * Paystack adapter — primary local payment provider for African markets.
@@ -29,13 +30,15 @@ const PAYSTACK_API_BASE = 'https://api.paystack.co'
 export class PaystackPaymentAdapter implements PaymentProviderAdapter {
   readonly name = 'paystack'
   private config: PaystackConfig
+  private trackedFetch: ReturnType<typeof createProviderFetch>
 
   constructor(config: PaystackConfig) {
     this.config = config
+    this.trackedFetch = createProviderFetch('paystack')
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
-    const res = await fetch(`${PAYSTACK_API_BASE}${path}`, {
+    const res = await this.trackedFetch(`${PAYSTACK_API_BASE}${path}`, {
       method,
       headers: {
         'Authorization': `Bearer ${this.config.secretKey}`,
@@ -129,7 +132,7 @@ export class PaystackPaymentAdapter implements PaymentProviderAdapter {
    *   3. Amount and currency match the webhook payload (prevents tampering)
    */
   private async verifyTransaction(reference: string, expectedAmount?: number, expectedCurrency?: string): Promise<void> {
-    const res = await fetch(`${PAYSTACK_API_BASE}/transaction/verify/${encodeURIComponent(reference)}`, {
+    const res = await this.trackedFetch(`${PAYSTACK_API_BASE}/transaction/verify/${encodeURIComponent(reference)}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${this.config.secretKey}`,

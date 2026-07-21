@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import Fastify, { type FastifyError } from 'fastify'
 import fastifyEnv from '@fastify/env'
 import fastifyCookie from '@fastify/cookie'
@@ -8,6 +9,7 @@ import './types/request.js'
 // Shared plugins
 import { corsPlugin, supabasePlugin, authPlugin, rateLimitPlugin } from './shared/plugins/index.js'
 import aiPlugin from './ai/plugin.js'
+import { monitorPlugin, flushMonitorBuffer } from './monitoring/index.js'
 
 // Shared routes
 import healthRoutes from './shared/routes/health.js'
@@ -24,6 +26,9 @@ import { eventsRoutes } from './events/index.js'
 import { notificationsRoutes } from './notifications/index.js'
 import { focusRoutes } from './focus/index.js'
 import { adminRoutes } from './admin/index.js'
+
+// AI chat routes
+import aiChatRoutes from './ai/routes.js'
 
 // Billing (subscription routes registered under /user)
 import userSubscriptionRoutes from './billing/routes.js'
@@ -55,6 +60,13 @@ const envSchema = {
     AI_BASE_URL: { type: 'string', default: '' },
     AI_MAX_TOKENS: { type: 'string', default: '2048' },
     AI_TEMPERATURE: { type: 'string', default: '0.7' },
+    AI_FALLBACK_CHAIN: { type: 'string', default: 'gemini,groq,openrouter' },
+    GEMINI_API_KEY: { type: 'string', default: '' },
+    GEMINI_MODEL: { type: 'string', default: 'gemini-2.0-flash' },
+    GROQ_API_KEY: { type: 'string', default: '' },
+    GROQ_MODEL: { type: 'string', default: 'llama-3.1-70b-versatile' },
+    OPENROUTER_API_KEY: { type: 'string', default: '' },
+    OPENROUTER_MODEL: { type: 'string', default: 'meta-llama/llama-3.1-70b-instruct:free' },
   },
 }
 
@@ -71,6 +83,7 @@ const fastify = Fastify({
         : undefined,
   },
   requestIdHeader: 'x-request-id',
+  genReqId: () => crypto.randomUUID(),
   bodyLimit: 1_048_576,
 })
 
@@ -95,6 +108,13 @@ declare module 'fastify' {
       AI_BASE_URL: string
       AI_MAX_TOKENS: string
       AI_TEMPERATURE: string
+      AI_FALLBACK_CHAIN: string
+      GEMINI_API_KEY: string
+      GEMINI_MODEL: string
+      GROQ_API_KEY: string
+      GROQ_MODEL: string
+      OPENROUTER_API_KEY: string
+      OPENROUTER_MODEL: string
     }
   }
 }
@@ -114,6 +134,7 @@ async function start() {
     await fastify.register(rateLimitPlugin)
     await fastify.register(fastifyCookie)
     await fastify.register(supabasePlugin)
+    await fastify.register(monitorPlugin)
     await fastify.register(authPlugin)
     await fastify.register(aiPlugin)
 
@@ -136,6 +157,9 @@ async function start() {
     await fastify.register(notificationsRoutes, { prefix: '/api/v1/user' })
     await fastify.register(focusRoutes, { prefix: '/api/v1/user' })
     await fastify.register(userSubscriptionRoutes, { prefix: '/api/v1/user' })
+
+    // AI routes (authenticated)
+    await fastify.register(aiChatRoutes, { prefix: '/api/v1/ai' })
 
     // Admin routes
     await fastify.register(adminRoutes, { prefix: '/api/v1/admin' })
@@ -186,6 +210,7 @@ async function start() {
 const gracefulShutdown = async (signal: string) => {
   fastify.log.info(`${signal} received, shutting down gracefully`)
   try {
+    await flushMonitorBuffer()
     await fastify.close()
     process.exit(0)
   } catch (error) {

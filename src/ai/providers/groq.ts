@@ -1,6 +1,9 @@
 /**
- * HuggingFace Inference API Provider Implementation
- * Uses the free Inference API (serverless) — no GPU costs for low-volume usage.
+ * Groq Provider Implementation
+ *
+ * Uses Groq's OpenAI-compatible API for ultra-fast inference.
+ * Free tier: ~6,000 requests/day on smaller models.
+ * Hosts Llama 3, Mixtral, Gemma.
  */
 
 import type {
@@ -22,8 +25,8 @@ import {
 } from '../prompts.js'
 import { monitoredFetch } from '../../monitoring/tracked-fetch.js'
 
-export class HuggingFaceProvider implements AIProvider {
-  readonly name = 'huggingface' as const
+export class GroqProvider implements AIProvider {
+  readonly name = 'groq' as const
   private config: AIProviderConfig
 
   constructor(config: AIProviderConfig) {
@@ -31,19 +34,21 @@ export class HuggingFaceProvider implements AIProvider {
   }
 
   async complete(request: AICompletionRequest): Promise<AICompletionResponse> {
-    const model = this.config.model || 'mistralai/Mistral-7B-Instruct-v0.3'
-    const baseUrl = this.config.baseUrl || 'https://api-inference.huggingface.co/models'
-    const url = `${baseUrl}/${model}/v1/chat/completions`
+    const model = this.config.model || 'llama-3.1-70b-versatile'
+    const url = `${this.config.baseUrl || 'https://api.groq.com/openai/v1'}/chat/completions`
 
-    const body = {
+    const body: Record<string, unknown> = {
       model,
       messages: request.messages,
       max_tokens: request.maxTokens ?? this.config.maxTokens ?? 2048,
       temperature: request.temperature ?? this.config.temperature ?? 0.7,
-      stream: false,
     }
 
-    const response = await monitoredFetch('huggingface', url, {
+    if (request.responseFormat === 'json') {
+      body.response_format = { type: 'json_object' }
+    }
+
+    const response = await monitoredFetch('groq', url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -54,7 +59,7 @@ export class HuggingFaceProvider implements AIProvider {
 
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`HuggingFace API error (${response.status}): ${errorText}`)
+      throw new Error(`Groq API error (${response.status}): ${errorText}`)
     }
 
     const data = await response.json() as {
@@ -65,8 +70,8 @@ export class HuggingFaceProvider implements AIProvider {
 
     return {
       content: data.choices[0].message.content,
-      provider: 'huggingface',
-      model,
+      provider: 'groq',
+      model: data.model,
       usage: data.usage ? {
         promptTokens: data.usage.prompt_tokens,
         completionTokens: data.usage.completion_tokens,
@@ -77,36 +82,19 @@ export class HuggingFaceProvider implements AIProvider {
 
   async personalizaLesson(input: LessonPersonalizationInput): Promise<LessonPersonalizationOutput> {
     const messages = buildLessonPersonalizationPrompt(input)
-    const response = await this.complete({ messages, temperature: 0.7 })
-
-    // HuggingFace models may not always produce clean JSON — attempt extraction
-    const content = this.extractJson(response.content)
-    return JSON.parse(content) as LessonPersonalizationOutput
+    const response = await this.complete({ messages, responseFormat: 'json', temperature: 0.7 })
+    return JSON.parse(response.content) as LessonPersonalizationOutput
   }
 
   async gradeCapstone(input: CapstoneGradingInput): Promise<CapstoneGradingOutput> {
     const messages = buildCapstoneGradingPrompt(input)
-    const response = await this.complete({ messages, temperature: 0.3 })
-    const content = this.extractJson(response.content)
-    return JSON.parse(content) as CapstoneGradingOutput
+    const response = await this.complete({ messages, responseFormat: 'json', temperature: 0.3 })
+    return JSON.parse(response.content) as CapstoneGradingOutput
   }
 
   async assistantChat(input: AssistantInput): Promise<AssistantOutput> {
     const messages = buildAssistantPrompt(input)
     const response = await this.complete({ messages, temperature: 0.6, maxTokens: 512 })
     return { answer: response.content }
-  }
-
-  /** Attempt to extract JSON from responses that may include markdown fences */
-  private extractJson(text: string): string {
-    // Try to find JSON within code fences
-    const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
-    if (fenceMatch) return fenceMatch[1].trim()
-
-    // Try to find raw JSON object
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (jsonMatch) return jsonMatch[0]
-
-    return text
   }
 }
