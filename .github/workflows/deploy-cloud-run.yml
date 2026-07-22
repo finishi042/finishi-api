@@ -1,0 +1,90 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: finishi-waitlist
+  REGION: us-central1
+  SERVICE_NAME: finishi-api
+  REPOSITORY: finishi-api
+  IMAGE_NAME: app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker to use gcloud as credential helper
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Build and Push Docker Image
+        run: |
+          gcloud builds submit \
+            --tag ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --tag ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:latest \
+            --timeout=10m || true
+
+          sleep 10
+
+          LATEST_BUILD=$(gcloud builds list --limit=1 --format="value(id)")
+          BUILD_STATUS=$(gcloud builds describe $LATEST_BUILD --format="value(status)")
+
+          if [ "$BUILD_STATUS" != "SUCCESS" ]; then
+            echo "Build failed with status: $BUILD_STATUS"
+            gcloud builds log $LATEST_BUILD
+            exit 1
+          fi
+
+          echo "Build completed successfully"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:latest \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated \
+            --port=3000 \
+            --memory=512Mi \
+            --cpu=1 \
+            --min-instances=0 \
+            --max-instances=10 \
+            --timeout=60s \
+            --set-env-vars="NODE_ENV=production,PORT=3000,LOG_LEVEL=info,ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }},GOOGLE_REDIRECT_URL=${{ secrets.GOOGLE_REDIRECT_URL }},FRONTEND_URL=${{ secrets.FRONTEND_URL }}" \
+            --set-secrets="SUPABASE_URL=supabase-url:latest,SUPABASE_ANON_KEY=supabase-anon-key:latest,SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest,SUPABASE_JWT_SECRET=supabase-jwt-secret:latest"
+
+      - name: Show Deployment URL
+        run: |
+          echo "Deployment successful!"
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)')
+          echo "Service URL: $SERVICE_URL"
+
+      - name: Test deployment
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)')
+          sleep 5
+          curl -f "$SERVICE_URL/health" || exit 1
