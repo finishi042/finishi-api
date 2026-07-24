@@ -116,12 +116,7 @@ gcloud iam service-accounts add-iam-policy-binding "$SERVICE_ACCOUNT_EMAIL" \
   --role="roles/iam.workloadIdentityUser" \
   --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$POOL_NAME/attribute.repository/$GITHUB_USERNAME/$REPO_NAME"
 
-echo -e "\n${GREEN}Step 7: Creating secrets in Secret Manager (if not existing)...${NC}"
-for SECRET_NAME in supabase-url supabase-anon-key supabase-service-role-key supabase-jwt-secret allowed-origins; do
-  gcloud secrets create "$SECRET_NAME" --project="$PROJECT_ID" 2>/dev/null || echo "Secret '$SECRET_NAME' already exists"
-done
-
-echo -e "\n${GREEN}Step 8: Getting Workload Identity Provider path...${NC}"
+echo -e "\n${GREEN}Step 7: Getting Workload Identity Provider path...${NC}"
 WIF_PROVIDER=$(gcloud iam workload-identity-pools providers describe "$PROVIDER_NAME" \
   --project="$PROJECT_ID" \
   --location="global" \

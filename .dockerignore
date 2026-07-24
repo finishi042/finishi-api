@@ -48,7 +48,6 @@ logs/
 
 # TypeScript
 *.tsbuildinfo
-tsconfig.json
 
 # Misc
 .editorconfig
