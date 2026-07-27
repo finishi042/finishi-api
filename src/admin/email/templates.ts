@@ -70,3 +70,21 @@ export function welcomeTemplate(data: WelcomeTemplateData): { subject: string; h
     }),
   }
 }
+
+// ── OTP / Password Reset ──────────────────────────────────────────────────
+
+export interface OtpTemplateData {
+  otp: string
+  isAdmin?: boolean
+}
+
+export function otpTemplate(data: OtpTemplateData): { subject: string; html: string } {
+  const subjectPrefix = data.isAdmin ? 'Admin ' : ''
+  return {
+    subject: `Your Finishi ${subjectPrefix}Password Reset Code`,
+    html: renderTemplate('otp', {
+      subject: `Your Finishi ${subjectPrefix}Password Reset Code`,
+      otp: data.otp,
+    }),
+  }
+}

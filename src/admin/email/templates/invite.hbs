@@ -1,22 +1,28 @@
-<div class="body">
-  <p>{{#if name}}Hi {{name}},{{else}}Hi there,{{/if}}</p>
+<div class="email-body">
+  <p class="greeting">{{#if name}}Hey {{name}}!{{else}}Hey there!{{/if}}</p>
 
   <p>{{message}}</p>
 
   {{#if skill}}
-  <p>We've matched you with content around <span class="badge">{{skill}}</span> to get you started on the right path.</p>
+  <div class="feature-box">
+    <p>
+      We've matched you with content around <span class="badge">{{skill}}</span> to kickstart your learning journey on the right path.
+    </p>
+  </div>
   {{/if}}
 
-  <p>Finishi delivers short, focused lessons built around your goals — no fluff, just progress.</p>
+  <p>
+    Finishi delivers focused, bite-sized lessons built around your goals. No fluff, no overwhelm — just steady progress that sticks.
+  </p>
 
   <div class="cta-wrap">
-    <a class="cta" href="{{ctaUrl}}">Get Started</a>
+    <a class="cta" href="{{ctaUrl}}">Accept Invite</a>
   </div>
 
   <hr class="divider" />
 
-  <p style="font-size:13px;color:#6B7280;">
-    If the button above doesn't work, copy and paste this link into your browser:<br />
-    <a href="{{ctaUrl}}" style="color:#7B2CBF;">{{ctaUrl}}</a>
+  <p class="link-fallback">
+    Button not working? Copy and paste this link into your browser:<br />
+    <a href="{{ctaUrl}}">{{ctaUrl}}</a>
   </p>
 </div>

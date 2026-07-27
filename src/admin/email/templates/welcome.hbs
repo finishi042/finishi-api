@@ -1,17 +1,19 @@
-<div class="body">
-  <p>Hi {{name}},</p>
-
-  <p>Welcome to Finishi! Your account is all set and you're ready to start learning.</p>
+<div class="email-body">
+  <p class="greeting">Hey {{name}}!</p>
 
   <p>
-    Finishi breaks down complex topics into bite-sized, goal-driven lessons so you can
-    make real progress — at your own pace.
+    Welcome aboard! Your Finishi account is ready and waiting. We're excited to have you join our community of lifelong learners.
   </p>
+
+  <div class="feature-box">
+    <p>
+      Finishi transforms complex topics into bite-sized, actionable lessons designed around your goals. Learn at your own pace, track your progress, and actually retain what you learn.
+    </p>
+  </div>
 
   {{#if skill}}
   <p>
-    We've set up a personalised path around <span class="badge">{{skill}}</span>
-    so your first lesson is already waiting.
+    We've already set up a personalised learning path for you around <span class="badge">{{skill}}</span> — your first lesson is ready and waiting.
   </p>
   {{/if}}
 
@@ -21,5 +23,7 @@
 
   <hr class="divider" />
 
-  <p>Have questions? Just reply to this email — we read every one.</p>
+  <p style="font-size: 14px; color: #6B7280;">
+    Have questions or need help getting started? Just reply to this email — a real human reads every message.
+  </p>
 </div>

@@ -56,7 +56,7 @@ Handlebars.registerHelper('or', (a: unknown, b: unknown) => a || b)
 
 // ── Public render API ─────────────────────────────────────────────────────
 
-export type TemplateName = 'invite' | 'welcome' | 'general'
+export type TemplateName = 'invite' | 'welcome' | 'general' | 'otp'
 
 export interface RenderContext {
   // Layout / shared
@@ -69,6 +69,8 @@ export interface RenderContext {
   skill?: string
   ctaUrl?: string
   ctaLabel?: string
+  // OTP
+  otp?: string
 }
 
 /**
