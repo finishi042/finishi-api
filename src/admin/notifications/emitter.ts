@@ -37,11 +37,11 @@ export function notifyAdminLessonPublished(lessonId: string, title: string): voi
   }).catch(() => {})
 }
 
-export function notifyAdminWaitlistSubmission(email: string, name?: string): void {
+export function notifyAdminWaitlistSubmission(email: string): void {
   createAdminNotification({
     type: 'waitlist',
     title: 'New waitlist signup',
-    body: `${name ?? email} submitted a waitlist request.`,
+    body: `${email} submitted a waitlist request.`,
     ref_type: 'waitlist',
     ref_id: email,
   }).catch(() => {})

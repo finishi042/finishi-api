@@ -463,6 +463,50 @@ fastify.post('/admin/update-password', {
     message: 'Password updated successfully.',
   }))
 })
+
+/**
+ * GET /auth/admin/me
+ * Returns the current admin's info if authenticated AND is a valid admin.
+ * This prevents regular users from accessing the admin panel.
+ */
+fastify.get('/admin/me', async (request, reply) => {
+  const token = (request.cookies as Record<string, string | undefined>)?.[COOKIE_NAME]
+    ?? request.headers.authorization?.substring(7)
+
+  if (!token) {
+    return reply.code(401).send(formatError('Not authenticated', 'UNAUTHORIZED'))
+  }
+
+  const supabase = getSupabase()
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+
+  if (error || !user) {
+    return reply.code(401).send(formatError('Invalid session', 'UNAUTHORIZED'))
+  }
+
+  // Verify this user is in the admins table and is active
+  const { data: admin, error: adminErr } = await supabase
+    .from('admins')
+    .select('id, email, full_name, role, is_active')
+    .eq('auth_user_id', user.id)
+    .single()
+
+  if (adminErr || !admin) {
+    return reply.code(403).send(formatError('Not an admin account', 'NOT_ADMIN'))
+  }
+
+  if (!admin.is_active) {
+    return reply.code(403).send(formatError('Admin account is deactivated', 'ADMIN_INACTIVE'))
+  }
+
+  const output = AdminLoginOutput.parse({
+    admin_id: admin.id,
+    email: admin.email,
+    full_name: admin.full_name,
+    role: admin.role,
+  })
+  return reply.send(formatResponse(output))
+})
 }
 
 export default adminAuthRoutes

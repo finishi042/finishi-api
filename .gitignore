@@ -35,3 +35,9 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
+
+# Production environment (contains secrets)
+.env.production
+
+# Google Cloud credentials
+credentials.json

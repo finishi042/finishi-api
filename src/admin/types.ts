@@ -23,7 +23,6 @@ export type WaitlistStatus = 'pending' | 'approved' | 'rejected'
 
 export interface WaitlistEntry {
   id: string
-  full_name: string
   email: string
   learning_goal?: string
   status: WaitlistStatus

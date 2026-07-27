@@ -137,8 +137,8 @@ jobs:
             --min-instances=0 \
             --max-instances=10 \
             --timeout=60s \
-            --set-env-vars="NODE_ENV=production,LOG_LEVEL=info,ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }},GOOGLE_REDIRECT_URL=${{ secrets.GOOGLE_REDIRECT_URL }},FRONTEND_URL=${{ secrets.FRONTEND_URL }}" \
-            --set-secrets="SUPABASE_URL=supabase-url:latest,SUPABASE_ANON_KEY=supabase-anon-key:latest,SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest,SUPABASE_JWT_SECRET=supabase-jwt-secret:latest" \
+            --set-env-vars="NODE_ENV=production,LOG_LEVEL=info" \
+            --set-secrets="SUPABASE_URL=supabase-url:latest,SUPABASE_ANON_KEY=supabase-anon-key:latest,SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest,SUPABASE_JWT_SECRET=supabase-jwt-secret:latest,ALLOWED_ORIGINS=allowed-origins:latest,FRONTEND_URL=frontend-url:latest" \
             --quiet
           echo "✓ Deployment complete"
 

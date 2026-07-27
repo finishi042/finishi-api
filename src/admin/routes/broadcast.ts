@@ -78,7 +78,7 @@ const adminBroadcastRoutes: FastifyPluginAsync = async (fastify) => {
 
       // Send to waitlist entries
       if (['waitlist', 'waitlist_pending', 'everyone'].includes(audience)) {
-        let waitlistQuery = req.supabase.from('waitlist').select('id, email, full_name')
+        let waitlistQuery = req.supabase.from('waitlist').select('id, email')
 
         if (audience === 'waitlist_pending') {
           waitlistQuery = waitlistQuery.eq('status', 'pending')
