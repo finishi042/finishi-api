@@ -10,6 +10,13 @@ on:
       - main
       - develop
 
+env:
+  PROJECT_ID: finishi-waitlist
+  REGION: us-central1
+  SERVICE_NAME: finishi-api
+  REPOSITORY: finishi-api
+  IMAGE_NAME: app
+
 jobs:
   lint:
     name: Lint
@@ -107,3 +114,95 @@ jobs:
             exit 1
           fi
           echo "Build successful!"
+
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [build]
+    # Only deploy on push to main (not PRs or other branches)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker registry
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+          echo "✓ Docker configured for ${{ env.REGION }}-docker.pkg.dev"
+
+      - name: Build Docker image
+        run: |
+          echo "Building image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          gcloud builds submit \
+            --tag "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" \
+            --timeout=10m \
+            --quiet
+          echo "✓ Image built and pushed successfully"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated \
+            --port=8080 \
+            --memory=512Mi \
+            --cpu=1 \
+            --min-instances=0 \
+            --max-instances=10 \
+            --timeout=60s \
+            --set-env-vars="NODE_ENV=production,LOG_LEVEL=info,ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }},GOOGLE_REDIRECT_URL=${{ secrets.GOOGLE_REDIRECT_URL }},FRONTEND_URL=${{ secrets.FRONTEND_URL }}" \
+            --set-secrets="SUPABASE_URL=supabase-url:latest,SUPABASE_ANON_KEY=supabase-anon-key:latest,SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest,SUPABASE_JWT_SECRET=supabase-jwt-secret:latest" \
+            --quiet
+          echo "✓ Deployment complete"
+
+      - name: Get deployment URL
+        id: url
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)')
+          echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "✓ Service URL: $SERVICE_URL"
+
+      - name: Health check
+        run: |
+          echo "Waiting for service to be ready..."
+          sleep 5
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.url.outputs.url }}/health")
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✓ Health check passed (HTTP $HTTP_STATUS)"
+          else
+            echo "✗ Health check failed (HTTP $HTTP_STATUS)"
+            exit 1
+          fi
+
+      - name: Deployment summary
+        run: |
+          echo ""
+          echo "══════════════════════════════════════════════════════════"
+          echo "  DEPLOYMENT SUCCESSFUL"
+          echo "══════════════════════════════════════════════════════════"
+          echo ""
+          echo "  Service:  ${{ env.SERVICE_NAME }}"
+          echo "  Region:   ${{ env.REGION }}"
+          echo "  Image:    ${{ github.sha }}"
+          echo "  URL:      ${{ steps.url.outputs.url }}"
+          echo ""
+          echo "══════════════════════════════════════════════════════════"

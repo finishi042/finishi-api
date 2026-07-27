@@ -21,7 +21,7 @@ export const SignupSchema = z.object({
       'Password must contain at least one number'
     )
     .refine(
-      (val) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(val),
+      (val) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(val),
       'Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':"|,.<>/?)'
     ),
   full_name: z.string().min(1).max(120).trim().optional(),
@@ -50,7 +50,7 @@ const passwordSchema = z
     'Password must contain at least one number'
   )
   .refine(
-    (val) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(val),
+    (val) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(val),
     'Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':"|,.<>/?)'
   )
 

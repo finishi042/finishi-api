@@ -132,7 +132,7 @@ describe('Auth Routes', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/v1/auth/signup',
-        payload: { email: 'existing@test.com', password: 'validpass123' },
+        payload: { email: 'existing@test.com', password: 'ValidPass123!' },
       })
       expect(res.statusCode).toBe(409)
       expect(res.json().error.code).toBe('AUTH_ERROR')
@@ -155,7 +155,7 @@ describe('Auth Routes', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/v1/auth/signup',
-        payload: { email: user.email, password: 'validpass123', full_name: 'Test User' },
+        payload: { email: user.email, password: 'ValidPass123!', full_name: 'Test User' },
       })
 
       expect(res.statusCode).toBe(201)

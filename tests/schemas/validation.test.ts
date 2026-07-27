@@ -16,7 +16,7 @@ describe('Auth Schemas', () => {
     it('passes with valid data', () => {
       const result = SignupSchema.safeParse({
         email: 'test@example.com',
-        password: 'securepass',
+        password: 'SecurePass1!',
         full_name: 'Test User',
       })
       expect(result.success).toBe(true)
@@ -25,7 +25,7 @@ describe('Auth Schemas', () => {
     it('allows optional full_name', () => {
       const result = SignupSchema.safeParse({
         email: 'test@example.com',
-        password: 'securepass',
+        password: 'SecurePass1!',
       })
       expect(result.success).toBe(true)
     })
@@ -34,7 +34,7 @@ describe('Auth Schemas', () => {
       const longEmail = 'a'.repeat(250) + '@test.com'
       const result = SignupSchema.safeParse({
         email: longEmail,
-        password: 'securepass',
+        password: 'SecurePass1!',
       })
       expect(result.success).toBe(false)
     })
@@ -42,7 +42,7 @@ describe('Auth Schemas', () => {
     it('rejects password under 8 characters', () => {
       const result = SignupSchema.safeParse({
         email: 'test@test.com',
-        password: '1234567', // 7 chars
+        password: 'Aa1!xyz', // 7 chars
       })
       expect(result.success).toBe(false)
       expect(result.error!.issues[0].message).toContain('8 characters')
@@ -51,7 +51,7 @@ describe('Auth Schemas', () => {
     it('rejects password over 128 characters', () => {
       const result = SignupSchema.safeParse({
         email: 'test@test.com',
-        password: 'a'.repeat(129),
+        password: 'Aa1!' + 'a'.repeat(126), // 130 chars
       })
       expect(result.success).toBe(false)
     })
@@ -59,15 +59,16 @@ describe('Auth Schemas', () => {
     it('accepts password exactly 8 characters', () => {
       const result = SignupSchema.safeParse({
         email: 'test@test.com',
-        password: '12345678',
+        password: 'Test123!',
       })
       expect(result.success).toBe(true)
     })
 
     it('accepts password exactly 128 characters', () => {
+      // Password with all required character types + padding
       const result = SignupSchema.safeParse({
         email: 'test@test.com',
-        password: 'a'.repeat(128),
+        password: 'Aa1!' + 'a'.repeat(124),
       })
       expect(result.success).toBe(true)
     })
@@ -75,7 +76,7 @@ describe('Auth Schemas', () => {
     it('rejects extra fields (strict mode)', () => {
       const result = SignupSchema.safeParse({
         email: 'test@test.com',
-        password: 'securepass',
+        password: 'SecurePass1!',
         isAdmin: true,
       })
       expect(result.success).toBe(false)
@@ -84,7 +85,7 @@ describe('Auth Schemas', () => {
     it('trims full_name whitespace', () => {
       const result = SignupSchema.safeParse({
         email: 'test@test.com',
-        password: 'securepass',
+        password: 'SecurePass1!',
         full_name: '  Test User  ',
       })
       expect(result.success).toBe(true)
@@ -94,7 +95,7 @@ describe('Auth Schemas', () => {
     it('rejects full_name exceeding 120 characters', () => {
       const result = SignupSchema.safeParse({
         email: 'test@test.com',
-        password: 'securepass',
+        password: 'SecurePass1!',
         full_name: 'A'.repeat(121),
       })
       expect(result.success).toBe(false)
@@ -103,7 +104,7 @@ describe('Auth Schemas', () => {
     it('rejects invalid email formats', () => {
       const invalidEmails = ['notanemail', '@missing.com', 'spaces @test.com', 'test@', '']
       for (const email of invalidEmails) {
-        const result = SignupSchema.safeParse({ email, password: 'securepass' })
+        const result = SignupSchema.safeParse({ email, password: 'SecurePass1!' })
         expect(result.success).toBe(false)
       }
     })
