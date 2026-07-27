@@ -18,7 +18,7 @@ export SUPABASE_URL='https://your-project.supabase.co'
 export SUPABASE_ANON_KEY='your-anon-key'
 export SUPABASE_SERVICE_ROLE_KEY='your-service-role-key'
 export SUPABASE_JWT_SECRET='your-jwt-secret'
-export ALLOWED_ORIGINS='https://admin.finishi.app,https://app.finishi.app'
+export ALLOWED_ORIGINS='https://admin.finishi.org,https://user.finishi.org'
 ```
 
 ### 2. Run Deployment Script
@@ -97,7 +97,7 @@ Required environment variables for Cloud Run:
 | `SUPABASE_ANON_KEY` | Supabase anonymous key | `eyJhbGc...` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | `eyJhbGc...` |
 | `SUPABASE_JWT_SECRET` | JWT secret for token verification | `your-secret` |
-| `ALLOWED_ORIGINS` | Comma-separated CORS origins | `https://admin.finishi.app,https://app.finishi.app` |
+| `ALLOWED_ORIGINS` | Comma-separated CORS origins | `https://admin.finishi.org,https://user.finishi.org` |
 
 ## Configuration Options
 

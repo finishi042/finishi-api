@@ -152,8 +152,8 @@ describe('Billing Schemas', () => {
       const result = CheckoutSchema.safeParse({
         plan: 'pro',
         interval: 'monthly',
-        success_url: 'https://app.finishi.com/success',
-        cancel_url: 'https://app.finishi.com/cancel',
+        success_url: 'https://user.finishi.org/success',
+        cancel_url: 'https://user.finishi.org/cancel',
       })
       expect(result.success).toBe(true)
     })
