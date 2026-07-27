@@ -6,6 +6,21 @@ import { formatResponse } from '../supabase.js'
  */
 const healthRoutes: FastifyPluginAsync = async (fastify) => {
   /**
+   * Root endpoint
+   * Returns API info
+   */
+  fastify.get('/', async (_request, reply) => {
+    return reply.send(
+      formatResponse({
+        name: 'Finishi API',
+        version: '1.0.0',
+        status: 'ok',
+        docs: '/api/v1',
+      })
+    )
+  })
+
+  /**
    * Health check endpoint
    * Public endpoint to verify API is running
    */
