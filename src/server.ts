@@ -52,6 +52,8 @@ const envSchema = {
     SUPABASE_SERVICE_ROLE_KEY: { type: 'string' },
     SUPABASE_JWT_SECRET: { type: 'string' },
     ALLOWED_ORIGINS: { type: 'string', default: 'http://localhost:5173,http://localhost:5174,https://admin.finishi.org,https://user.finishi.org' },
+    GOOGLE_CLIENT_ID: { type: 'string', default: '' },
+    GOOGLE_CLIENT_SECRET: { type: 'string', default: '' },
     GOOGLE_REDIRECT_URL: { type: 'string', default: '' },
     FRONTEND_URL: { type: 'string', default: 'https://user.finishi.org' },
     PAYMENT_ENCRYPTION_KEY: { type: 'string', default: '' },
@@ -102,6 +104,8 @@ declare module 'fastify' {
       SUPABASE_SERVICE_ROLE_KEY: string
       SUPABASE_JWT_SECRET: string
       ALLOWED_ORIGINS: string
+      GOOGLE_CLIENT_ID: string
+      GOOGLE_CLIENT_SECRET: string
       GOOGLE_REDIRECT_URL: string
       FRONTEND_URL: string
       PAYMENT_ENCRYPTION_KEY: string
