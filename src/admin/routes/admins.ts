@@ -1,6 +1,6 @@
 /**
  * Admin management routes.
- * Allows super admins to list and delete admin accounts.
+ * Allows super admins to list, update, and delete admin accounts.
  */
 import type { FastifyPluginAsync } from 'fastify'
 import { formatResponse, formatError, wrapHandler } from '../../shared/handler.js'
@@ -33,6 +33,100 @@ const adminAdminsRoutes: FastifyPluginAsync = async (fastify) => {
     }))
 
     return reply.send(formatResponse(admins))
+  }))
+
+  /**
+   * PUT /admins/:id — Update an admin account
+   * Requires super_admin role
+   * Cannot change super_admin role
+   */
+  fastify.put<{ Params: { id: string }; Body: { full_name?: string; email?: string; role?: string } }>('/admins/:id', {
+    onRequest: [requireSuperAdmin],
+  }, wrapHandler('Failed to update admin', async (request, reply) => {
+    const { id } = request.params
+    const { full_name, email, role } = request.body || {}
+
+    // Get the admin to be updated
+    const { data: targetAdmin, error: fetchErr } = await request.supabase
+      .from('admins')
+      .select('id, auth_user_id, role, email, full_name')
+      .eq('id', id)
+      .single()
+
+    if (fetchErr || !targetAdmin) {
+      return reply.code(404).send(formatError('Admin not found'))
+    }
+
+    // Build update object
+    const updates: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    }
+
+    if (full_name && full_name.trim()) {
+      updates.full_name = full_name.trim()
+    }
+
+    // Handle email update
+    if (email && email.trim() && email !== targetAdmin.email) {
+      const newEmail = email.trim().toLowerCase()
+      
+      // Check if email is already in use
+      const { data: existingAdmin } = await request.supabase
+        .from('admins')
+        .select('id')
+        .eq('email', newEmail)
+        .neq('id', id)
+        .single()
+      
+      if (existingAdmin) {
+        return reply.code(400).send(formatError('Email is already in use by another admin'))
+      }
+      
+      updates.email = newEmail
+      
+      // Update the email in Supabase Auth as well
+      if (targetAdmin.auth_user_id) {
+        try {
+          const { getSupabase } = await import('../../shared/supabase.js')
+          const supabase = getSupabase()
+          const { error: authErr } = await supabase.auth.admin.updateUserById(targetAdmin.auth_user_id, {
+            email: newEmail,
+          })
+          if (authErr) {
+            request.log.warn({ err: authErr, adminId: id }, 'Failed to update auth user email')
+            return reply.code(400).send(formatError('Failed to update email in auth system'))
+          }
+        } catch (err) {
+          request.log.warn({ err, adminId: id }, 'Failed to update auth user email')
+          return reply.code(500).send(formatError('Failed to update email'))
+        }
+      }
+    }
+
+    // Allow role change only for non-super_admin accounts
+    if (role && targetAdmin.role !== 'super_admin') {
+      if (role === 'admin' || role === 'super_admin') {
+        updates.role = role
+      }
+    }
+
+    // Update the admin record
+    const { data: updatedAdmin, error: updateErr } = await request.supabase
+      .from('admins')
+      .update(updates)
+      .eq('id', id)
+      .select('id, email, full_name, role')
+      .single()
+
+    if (updateErr) throw updateErr
+
+    request.log.info({ adminId: id, updates, updatedBy: request.user?.id }, 'Admin updated')
+    return reply.send(formatResponse({
+      admin_id: updatedAdmin.id,
+      email: updatedAdmin.email,
+      full_name: updatedAdmin.full_name,
+      role: updatedAdmin.role,
+    }))
   }))
 
   /**
