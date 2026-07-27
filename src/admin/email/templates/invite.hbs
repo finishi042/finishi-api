@@ -1,0 +1,22 @@
+<div class="body">
+  <p>{{#if name}}Hi {{name}},{{else}}Hi there,{{/if}}</p>
+
+  <p>{{message}}</p>
+
+  {{#if skill}}
+  <p>We've matched you with content around <span class="badge">{{skill}}</span> to get you started on the right path.</p>
+  {{/if}}
+
+  <p>Finishi delivers short, focused lessons built around your goals — no fluff, just progress.</p>
+
+  <div class="cta-wrap">
+    <a class="cta" href="{{ctaUrl}}">Get Started</a>
+  </div>
+
+  <hr class="divider" />
+
+  <p style="font-size:13px;color:#6B7280;">
+    If the button above doesn't work, copy and paste this link into your browser:<br />
+    <a href="{{ctaUrl}}" style="color:#7B2CBF;">{{ctaUrl}}</a>
+  </p>
+</div>

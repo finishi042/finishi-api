@@ -1,0 +1,25 @@
+<div class="body">
+  <p>Hi {{name}},</p>
+
+  <p>Welcome to Finishi! Your account is all set and you're ready to start learning.</p>
+
+  <p>
+    Finishi breaks down complex topics into bite-sized, goal-driven lessons so you can
+    make real progress — at your own pace.
+  </p>
+
+  {{#if skill}}
+  <p>
+    We've set up a personalised path around <span class="badge">{{skill}}</span>
+    so your first lesson is already waiting.
+  </p>
+  {{/if}}
+
+  <div class="cta-wrap">
+    <a class="cta" href="{{ctaUrl}}">Start Learning</a>
+  </div>
+
+  <hr class="divider" />
+
+  <p>Have questions? Just reply to this email — we read every one.</p>
+</div>

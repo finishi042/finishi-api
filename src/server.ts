@@ -68,6 +68,8 @@ const envSchema = {
     GROQ_MODEL: { type: 'string', default: 'llama-3.1-70b-versatile' },
     OPENROUTER_API_KEY: { type: 'string', default: '' },
     OPENROUTER_MODEL: { type: 'string', default: 'meta-llama/llama-3.1-70b-instruct:free' },
+    RESEND_API_KEY: { type: 'string', default: '' },
+    EMAIL_FROM: { type: 'string', default: 'Finishi <noreply@finishi.app>' },
   },
 }
 
@@ -116,6 +118,8 @@ declare module 'fastify' {
       GROQ_MODEL: string
       OPENROUTER_API_KEY: string
       OPENROUTER_MODEL: string
+      RESEND_API_KEY: string
+      EMAIL_FROM: string
     }
   }
 }

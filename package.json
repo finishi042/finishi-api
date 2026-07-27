@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
+    "copy:templates": "cp -r src/admin/email/templates dist/admin/email/templates",
+    "build": "tsc && npm run copy:templates",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
@@ -27,11 +28,14 @@
     "@supabase/supabase-js": "^2.45.4",
     "fastify": "^5.1.0",
     "fastify-plugin": "^5.0.1",
+    "handlebars": "^4.7.9",
     "pino": "^9.5.0",
     "pino-pretty": "^13.0.0",
+    "resend": "^6.18.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/handlebars": "^4.0.40",
     "@types/node": "^22.10.1",
     "@types/pg": "^8.20.0",
     "pg": "^8.22.0",
