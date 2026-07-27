@@ -20,6 +20,7 @@ import adminPaymentConfigRoutes from './routes/payment-config.js'
 import adminSubscriptionPlansRoutes from './routes/subscription-plans.js'
 import adminMonitoringRoutes from './routes/monitoring.js'
 import adminEmailRoutes from './routes/email.js'
+import adminAdminsRoutes from './routes/admins.js'
 
 /**
  * Admin routes aggregator.
@@ -47,6 +48,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   await fastify.register(adminSubscriptionPlansRoutes)
   await fastify.register(adminMonitoringRoutes)
   await fastify.register(adminEmailRoutes)
+  await fastify.register(adminAdminsRoutes)
 }
 
 export default adminRoutes
