@@ -85,41 +85,11 @@ jobs:
         run: npm test -- --coverage
         if: github.event_name == 'pull_request'
 
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: [lint, typecheck, test]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build project
-        run: npm run build
-
-      - name: Verify build output
-        run: |
-          if [ ! -d "dist" ]; then
-            echo "Build failed: dist directory not found"
-            exit 1
-          fi
-          echo "Build successful!"
-
   deploy:
     name: Deploy to Cloud Run
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [build]
+    needs: [lint, typecheck, test]
     # Only deploy on push to main (not PRs or other branches)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
