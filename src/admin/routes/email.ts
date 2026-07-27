@@ -13,7 +13,7 @@ const adminEmailRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/email/send', async (request, reply) => {
     const parsed = SendEmailSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to send email', async (req, rep) => {
       const { emails, subject, message, template, cta_label, cta_url, skill } = parsed.data

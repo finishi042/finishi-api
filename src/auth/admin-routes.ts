@@ -79,7 +79,7 @@ const adminAuthRoutes: FastifyPluginAsync = async (fastify) => {
     const { session, user } = data
 
     // Verify this user is in the admins table
-    let { data: admin, error: adminErr } = await supabase
+    const { data: admin, error: adminErr } = await supabase
       .from('admins')
       .select('*')
       .eq('email', email)

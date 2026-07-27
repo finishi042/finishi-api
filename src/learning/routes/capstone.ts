@@ -43,7 +43,7 @@ const capstoneRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/capstone/submit', async (request, reply) => {
     const parsed = SubmitCapstoneSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to submit capstone', async (req, rep) => {
       const userId = req.user!.id

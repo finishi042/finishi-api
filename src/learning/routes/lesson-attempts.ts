@@ -11,7 +11,7 @@ const lessonAttemptsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/lesson-attempts', async (request, reply) => {
     const parsed = RecordLessonAttemptSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to record lesson attempt', async (req, rep) => {
       const userId = req.user!.id
@@ -85,8 +85,8 @@ const lessonAttemptsRoutes: FastifyPluginAsync = async (fastify) => {
     const attempts = data || []
     const totalTime = attempts.reduce((sum, a) => sum + (a.time_spent_secs || 0), 0)
     const completedCount = attempts.filter((a) => a.completed).length
-    const avgQuizScore = attempts.filter((a) => a.quiz_score != null).length > 0
-      ? Math.round(attempts.filter((a) => a.quiz_score != null).reduce((sum, a) => sum + a.quiz_score!, 0) / attempts.filter((a) => a.quiz_score != null).length)
+    const avgQuizScore = attempts.filter((a) => a.quiz_score !== null).length > 0
+      ? Math.round(attempts.filter((a) => a.quiz_score !== null).reduce((sum, a) => sum + a.quiz_score!, 0) / attempts.filter((a) => a.quiz_score !== null).length)
       : null
 
     return reply.send(formatResponse({

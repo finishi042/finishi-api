@@ -74,7 +74,7 @@ const adminLearningPathPhasesRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const parsed = CreatePhaseSchema.safeParse(request.body)
       if (!parsed.success)
-        return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+        {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
       return wrapHandler('Failed to create phase', async (req, rep) => {
         const { pathId } = req.params as { pathId: string }
@@ -117,7 +117,7 @@ const adminLearningPathPhasesRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const parsed = UpdatePhaseSchema.safeParse(request.body)
       if (!parsed.success)
-        return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+        {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
       return wrapHandler('Failed to update phase', async (req, rep) => {
         const { phaseId } = req.params as { pathId: string; phaseId: string }
@@ -164,7 +164,7 @@ const adminLearningPathPhasesRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const parsed = AddLessonToPhaseSchema.safeParse(request.body)
       if (!parsed.success)
-        return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+        {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
       return wrapHandler('Failed to add lesson to phase', async (req, rep) => {
         const { phaseId } = req.params as { pathId: string; phaseId: string }
@@ -238,7 +238,7 @@ const adminLearningPathPhasesRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const parsed = ReorderLessonsSchema.safeParse(request.body)
       if (!parsed.success)
-        return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+        {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
       return wrapHandler('Failed to reorder lessons', async (req, rep) => {
         const { phaseId } = req.params as { pathId: string; phaseId: string }

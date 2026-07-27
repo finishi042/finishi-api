@@ -45,7 +45,7 @@ const adminLessonsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/lessons', async (request, reply) => {
     const parsed = CreateLessonSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to create lesson', async (req, rep) => {
       // Validate that the skill exists
@@ -85,7 +85,7 @@ const adminLessonsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.put<{ Params: { id: string } }>('/lessons/:id', async (request, reply) => {
     const parsed = UpdateLessonSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to update lesson', async (req, rep) => {
       const { id } = req.params as { id: string }

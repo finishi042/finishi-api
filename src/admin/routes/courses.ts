@@ -73,7 +73,7 @@ const adminCoursesRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/courses', async (request, reply) => {
     const parsed = CreateCourseSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to create course', async (req, rep) => {
       // Validate skill exists
@@ -111,7 +111,7 @@ const adminCoursesRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.put<{ Params: { id: string } }>('/courses/:id', async (request, reply) => {
     const parsed = UpdateCourseSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to update course', async (req, rep) => {
       const { id } = req.params as { id: string }

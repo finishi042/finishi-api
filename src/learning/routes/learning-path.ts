@@ -41,7 +41,7 @@ const learningPathRoutes: FastifyPluginAsync = async (fastify) => {
 
     // Get lessons for each course
     const courseIds = (pathCourses ?? []).map((pc: any) => pc.course_id)
-    let lessonsMap: Record<string, any[]> = {}
+    const lessonsMap: Record<string, any[]> = {}
     if (courseIds.length > 0) {
       const { data: lessons } = await request.supabase
         .from('lessons')

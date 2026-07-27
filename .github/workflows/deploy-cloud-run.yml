@@ -16,35 +16,55 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     permissions:
       contents: read
       id-token: write
 
     steps:
-      - name: Checkout code
+      # ─── Stage 1: Setup ───────────────────────────────────────────────
+      - name: "Stage 1/6: Checkout code"
         uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud
+      - name: "Stage 2/6: Authenticate to Google Cloud"
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
-      - name: Set up Cloud SDK
+      - name: "Stage 2/6: Set up Cloud SDK"
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker to use gcloud as credential helper
-        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
-
-      - name: Build and Push Docker Image
+      - name: "Stage 2/6: Configure Docker registry"
         run: |
+          echo "::group::Configuring Docker for Artifact Registry"
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+          echo "::endgroup::"
+          echo "✓ Docker configured for ${{ env.REGION }}-docker.pkg.dev"
+
+      # ─── Stage 3: Build ───────────────────────────────────────────────
+      - name: "Stage 3/6: Build Docker image"
+        run: |
+          echo "::group::Building image with Cloud Build"
+          echo "Image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          
           gcloud builds submit \
             --tag "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" \
-            --timeout=10m
+            --timeout=10m \
+            --quiet
+          
+          echo "::endgroup::"
+          echo "✓ Image built and pushed successfully"
 
-      - name: Deploy to Cloud Run
+      # ─── Stage 4: Deploy ──────────────────────────────────────────────
+      - name: "Stage 4/6: Deploy to Cloud Run"
         run: |
+          echo "::group::Deploying to Cloud Run"
+          echo "Service: ${{ env.SERVICE_NAME }}"
+          echo "Region: ${{ env.REGION }}"
+          
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" \
             --platform managed \
@@ -57,20 +77,51 @@ jobs:
             --max-instances=10 \
             --timeout=60s \
             --set-env-vars="NODE_ENV=production,LOG_LEVEL=info,ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }},GOOGLE_REDIRECT_URL=${{ secrets.GOOGLE_REDIRECT_URL }},FRONTEND_URL=${{ secrets.FRONTEND_URL }}" \
-            --set-secrets="SUPABASE_URL=supabase-url:latest,SUPABASE_ANON_KEY=supabase-anon-key:latest,SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest,SUPABASE_JWT_SECRET=supabase-jwt-secret:latest"
+            --set-secrets="SUPABASE_URL=supabase-url:latest,SUPABASE_ANON_KEY=supabase-anon-key:latest,SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest,SUPABASE_JWT_SECRET=supabase-jwt-secret:latest" \
+            --quiet
+          
+          echo "::endgroup::"
+          echo "✓ Deployment complete"
 
-      - name: Show Deployment URL
-        run: |
-          echo "Deployment successful!"
-          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
-            --region ${{ env.REGION }} \
-            --format 'value(status.url)')
-          echo "Service URL: $SERVICE_URL"
-
-      - name: Test deployment
+      # ─── Stage 5: Verify ──────────────────────────────────────────────
+      - name: "Stage 5/6: Get deployment URL"
+        id: url
         run: |
           SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
             --region ${{ env.REGION }} \
             --format 'value(status.url)')
+          echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "✓ Service URL: $SERVICE_URL"
+
+      - name: "Stage 6/6: Health check"
+        run: |
+          echo "Waiting for service to be ready..."
           sleep 5
-          curl -f "$SERVICE_URL/health" || exit 1
+          
+          echo "::group::Health check"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.url.outputs.url }}/health")
+          
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "::endgroup::"
+            echo "✓ Health check passed (HTTP $HTTP_STATUS)"
+          else
+            echo "::endgroup::"
+            echo "✗ Health check failed (HTTP $HTTP_STATUS)"
+            exit 1
+          fi
+
+      # ─── Summary ──────────────────────────────────────────────────────
+      - name: "Deployment summary"
+        if: success()
+        run: |
+          echo ""
+          echo "══════════════════════════════════════════════════════════"
+          echo "  DEPLOYMENT SUCCESSFUL"
+          echo "══════════════════════════════════════════════════════════"
+          echo ""
+          echo "  Service:  ${{ env.SERVICE_NAME }}"
+          echo "  Region:   ${{ env.REGION }}"
+          echo "  Image:    ${{ github.sha }}"
+          echo "  URL:      ${{ steps.url.outputs.url }}"
+          echo ""
+          echo "══════════════════════════════════════════════════════════"

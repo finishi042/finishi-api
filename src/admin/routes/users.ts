@@ -95,7 +95,7 @@ const adminUsersRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/users/email', async (request, reply) => {
     const parsed = SendEmailSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to send email to users', async (req, rep) => {
       const { emails, subject, message, template, cta_label, cta_url, skill } = parsed.data
@@ -127,7 +127,7 @@ const adminUsersRoutes: FastifyPluginAsync = async (fastify) => {
       )
 
       if (result.failed > 0 && result.sent === 0)
-        return rep.code(502).send(formatError(`Email delivery failed: ${result.errors.join('; ')}`, 'EMAIL_ERROR'))
+        {return rep.code(502).send(formatError(`Email delivery failed: ${result.errors.join('; ')}`, 'EMAIL_ERROR'))}
 
       return rep.send(
         formatResponse({

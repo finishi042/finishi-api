@@ -17,7 +17,7 @@ const adminEventsRoutes: FastifyPluginAsync = async (fastify) => {
       if (q.data.status && q.data.status !== 'all') query = query.eq('status', q.data.status)
       if (q.data.type && q.data.type !== 'all') query = query.eq('type', q.data.type)
       if (q.data.search)
-        query = query.or(`title.ilike.%${q.data.search}%,skill_name.ilike.%${q.data.search}%`)
+        {query = query.or(`title.ilike.%${q.data.search}%,skill_name.ilike.%${q.data.search}%`)}
     }
 
     const { data, error, count } = await query
@@ -29,7 +29,7 @@ const adminEventsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/events', async (request, reply) => {
     const parsed = CreateEventSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to create event', async (req, rep) => {
       const { data, error } = await req.supabase
@@ -46,7 +46,7 @@ const adminEventsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.put<{ Params: { id: string } }>('/events/:id', async (request, reply) => {
     const parsed = UpdateEventSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to update event', async (req, rep) => {
       const { id } = req.params as { id: string }

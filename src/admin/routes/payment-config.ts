@@ -84,7 +84,7 @@ const adminPaymentConfigRoutes: FastifyPluginAsync = async (fastify) => {
     const totalCount = txns.length
     const successCount = txns.filter(t => t.status === 'success').length
     const failedCount = txns.filter(t => t.status === 'failed').length
-    const failoverCount = txns.filter(t => t.failover_from != null).length
+    const failoverCount = txns.filter(t => t.failover_from !== null).length
 
     // Group revenue by provider (successful transactions only)
     const providerRevenue: Record<string, { total: number; count: number; currency: string }> = {}

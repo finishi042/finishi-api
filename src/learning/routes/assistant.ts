@@ -20,7 +20,7 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/assistant/ask', async (request, reply) => {
     const parsed = AssistantAskSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to get assistant response', async (req, rep) => {
       const userId = req.user!.id

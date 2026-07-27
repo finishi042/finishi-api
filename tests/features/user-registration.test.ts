@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { buildApp, fakeUser, createMockSupabaseChain } from '../helpers/build-app.js'
+import { buildApp as _buildApp, fakeUser as _fakeUser, createMockSupabaseChain as _createMockSupabaseChain } from '../helpers/build-app.js'
 
 // Mock dependencies
 vi.mock('../../src/auth/onboarding.js', () => ({

@@ -68,7 +68,7 @@ const learningSkillsRoutes: FastifyPluginAsync = async (fastify) => {
 
     // Get real lesson counts
     const courseIds = (courses ?? []).map((c: any) => c.id)
-    let lessonCounts: Record<string, number> = {}
+    const lessonCounts: Record<string, number> = {}
     if (courseIds.length > 0) {
       const { data: lessonRows } = await request.supabase
         .from('lessons')

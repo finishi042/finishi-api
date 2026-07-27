@@ -43,7 +43,7 @@ const learningProgressRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/progress', async (request, reply) => {
     const parsed = UpdateProgressSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to update progress', async (req, rep) => {
       const userId = req.user?.id

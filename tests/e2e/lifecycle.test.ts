@@ -3,7 +3,6 @@
  * Tests the integration between multiple modules working together.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createHmac } from 'node:crypto'
 import type { WebhookEvent } from '../../src/billing/types.js'
 import { SubscriptionService } from '../../src/billing/service.js'
 

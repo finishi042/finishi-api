@@ -32,7 +32,7 @@ const adminLearningPathsRoutes: FastifyPluginAsync = async (fastify) => {
       const courseIds = [...new Set((pathCourses ?? []).map((pc: any) => pc.course_id))]
 
       // Count lessons per course
-      let courseLessonCounts: Record<string, number> = {}
+      const courseLessonCounts: Record<string, number> = {}
       if (courseIds.length > 0) {
         const { data: lessonRows } = await request.supabase
           .from('lessons')
@@ -94,7 +94,7 @@ const adminLearningPathsRoutes: FastifyPluginAsync = async (fastify) => {
 
     // Calculate real lesson counts per course
     const courseIds = (pathCourses ?? []).map((lpc: any) => lpc.course_id)
-    let courseLessonCounts: Record<string, number> = {}
+    const courseLessonCounts: Record<string, number> = {}
     if (courseIds.length > 0) {
       const { data: lessonRows } = await request.supabase
         .from('lessons')
@@ -120,7 +120,7 @@ const adminLearningPathsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/learning-paths', async (request, reply) => {
     const parsed = CreateLearningPathSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to create learning path', async (req, rep) => {
       // Validate that the skill exists
@@ -148,7 +148,7 @@ const adminLearningPathsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.put<{ Params: { id: string } }>('/learning-paths/:id', async (request, reply) => {
     const parsed = UpdateLearningPathSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to update learning path', async (req, rep) => {
       const { id } = req.params as { id: string }

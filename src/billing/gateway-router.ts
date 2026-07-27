@@ -175,6 +175,7 @@ export class PaymentGatewayRouter {
             billingInterval: params.interval,
           })
 
+          // eslint-disable-next-line
           throw new Error(
             `Payment failed: ${primary.name} error — ${(primaryError as Error).message}; ` +
             `${failover.name} failover error — ${(failoverError as Error).message}`

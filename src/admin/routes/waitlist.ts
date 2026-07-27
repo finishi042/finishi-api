@@ -18,7 +18,7 @@ const adminWaitlistRoutes: FastifyPluginAsync = async (fastify) => {
     if (q.success) {
       if (q.data.status && q.data.status !== 'all') query = query.eq('status', q.data.status)
       if (q.data.search)
-        query = query.or(`email.ilike.%${q.data.search}%`)
+        {query = query.or(`email.ilike.%${q.data.search}%`)}
     }
 
     const { data, error, count } = await query
@@ -30,7 +30,7 @@ const adminWaitlistRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.patch<{ Params: { id: string } }>('/waitlist/:id/status', async (request, reply) => {
     const parsed = WaitlistStatusSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to update waitlist status', async (req, rep) => {
       const { id } = req.params as { id: string }
@@ -52,7 +52,7 @@ const adminWaitlistRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/waitlist/invite', async (request, reply) => {
     const parsed = WaitlistInviteSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to send invites', async (req, rep) => {
       // 1. Mark waitlist entries as approved

@@ -55,7 +55,7 @@ const adminQuizzesRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const parsed = CreateQuizSchema.safeParse(request.body)
       if (!parsed.success)
-        return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+        {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
       return wrapHandler('Failed to create quiz', async (req, rep) => {
         const { lessonId } = req.params as { lessonId: string }
@@ -108,7 +108,7 @@ const adminQuizzesRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const parsed = UpdateQuizSchema.safeParse(request.body)
       if (!parsed.success)
-        return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+        {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
       return wrapHandler('Failed to update quiz', async (req, rep) => {
         const { lessonId } = req.params as { lessonId: string }

@@ -4,7 +4,7 @@
  * Tests the learning module including courses, lessons, and progress tracking.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import {
   UpdateProgressSchema,
   SubmitQuizSchema,

@@ -36,7 +36,7 @@ const adminSkillsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/skills', async (request, reply) => {
     const parsed = CreateSkillSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to create skill', async (req, rep) => {
       const { data, error } = await req.supabase
@@ -53,7 +53,7 @@ const adminSkillsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.put<{ Params: { id: string } }>('/skills/:id', async (request, reply) => {
     const parsed = UpdateSkillSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to update skill', async (req, rep) => {
       const { id } = req.params as { id: string }

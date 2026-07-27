@@ -52,7 +52,7 @@ const adminLearningPathCoursesRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const parsed = AddCourseToPathSchema.safeParse(request.body)
       if (!parsed.success)
-        return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+        {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
       return wrapHandler('Failed to add course to path', async (req, rep) => {
         const { pathId } = req.params as { pathId: string }
@@ -126,7 +126,7 @@ const adminLearningPathCoursesRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const parsed = ReorderCoursesSchema.safeParse(request.body)
       if (!parsed.success)
-        return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+        {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
       return wrapHandler('Failed to reorder courses', async (req, rep) => {
         const { pathId } = req.params as { pathId: string }

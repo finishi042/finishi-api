@@ -5,7 +5,6 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { buildApp, fakeUser, createMockSupabaseChain } from '../helpers/build-app.js'
 import {
   SubmitOnboardingSchema,
   SaveOnboardingProgressSchema,

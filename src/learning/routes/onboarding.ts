@@ -20,7 +20,7 @@ const onboardingRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/onboarding/start', async (request, reply) => {
     const parsed = StartSkillSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to start skill path', async (req, rep) => {
       const userId = req.user!.id

@@ -25,7 +25,7 @@ vi.mock('../../src/billing/provider.js', () => ({
 }))
 
 const { authenticate } = await import('../../src/shared/middleware/auth.js')
-const { requireUser, requireAdmin, requireSuperAdmin, requireRole } = await import('../../src/shared/middleware/rbac.js')
+const { requireUser, requireAdmin, requireSuperAdmin, requireRole: _requireRole } = await import('../../src/shared/middleware/rbac.js')
 const { requirePlan } = await import('../../src/shared/middleware/require-plan.js')
 
 // ── Request/Reply factories ───────────────────────────────────────────────────

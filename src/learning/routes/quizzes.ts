@@ -8,7 +8,7 @@ const learningQuizzesRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post<{ Params: { id: string } }>('/quizzes/:id/submit', async (request, reply) => {
     const parsed = SubmitQuizSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to submit quiz', async (req, rep) => {
       const userId = req.user!.id

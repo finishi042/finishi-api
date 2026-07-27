@@ -25,7 +25,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.put('/profile', async (request, reply) => {
     const parsed = UpdateProfileSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to update profile', async (req, rep) => {
       const userId = req.user!.id
@@ -51,7 +51,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.put('/settings', async (request, reply) => {
     const parsed = UpdateSettingsSchema.safeParse(request.body)
     if (!parsed.success)
-      return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
+      {return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))}
 
     return wrapHandler('Failed to update settings', async (req, rep) => {
       const userId = req.user!.id
