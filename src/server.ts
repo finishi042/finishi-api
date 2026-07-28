@@ -30,6 +30,7 @@ import { onboardingRoutes } from './onboarding/index.js'
 
 // AI chat routes
 import aiChatRoutes from './ai/routes.js'
+import aiHistoryRoutes from './ai/history-routes.js'
 
 // Billing (subscription routes registered under /user)
 import userSubscriptionRoutes from './billing/routes.js'
@@ -170,6 +171,7 @@ async function start() {
 
     // AI routes (authenticated)
     await fastify.register(aiChatRoutes, { prefix: '/api/v1/ai' })
+    await fastify.register(aiHistoryRoutes, { prefix: '/api/v1/ai' })
 
     // Admin routes
     await fastify.register(adminRoutes, { prefix: '/api/v1/admin' })
