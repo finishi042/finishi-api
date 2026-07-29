@@ -74,9 +74,14 @@ export interface RenderContext {
 }
 
 /**
+ * Templates that ship their own full HTML document and skip the shared layout.
+ */
+const STANDALONE_TEMPLATES: ReadonlySet<TemplateName> = new Set(['welcome'])
+
+/**
  * Render a named template into a full HTML email string.
  *
- * @param template  One of 'invite' | 'welcome' | 'general'
+ * @param template  One of 'invite' | 'welcome' | 'general' | 'otp'
  * @param ctx       Variables injected into both the body template and the layout
  * @returns         Complete HTML document as a string
  */
@@ -86,7 +91,12 @@ export function renderTemplate(template: TemplateName, ctx: RenderContext): stri
   // Render the body fragment
   const bodyHtml = load(template)(bodyCtx)
 
-  // Wrap in the layout
+  // Standalone templates include their own <html> wrapper
+  if (STANDALONE_TEMPLATES.has(template)) {
+    return bodyHtml
+  }
+
+  // Wrap in the shared layout
   return getLayout()({ ...bodyCtx, body: bodyHtml })
 }
 

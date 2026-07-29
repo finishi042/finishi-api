@@ -258,7 +258,7 @@ fastify.post('/admin/forgot-password', {
     return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
   }
 
-  const { email } = parsed.data
+  const email = parsed.data.email.toLowerCase().trim()
   const supabase = getSupabase()
 
   // Verify this email belongs to an active admin
@@ -281,7 +281,7 @@ fastify.post('/admin/forgot-password', {
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
 
   // Store OTP
-  await supabase.from('password_reset_otps').upsert({
+  const { error: upsertError } = await supabase.from('password_reset_otps').upsert({
     email,
     otp_hash: hashOtp(otp),
     expires_at: expiresAt.toISOString(),
@@ -289,6 +289,11 @@ fastify.post('/admin/forgot-password', {
     used: false,
     created_at: new Date().toISOString(),
   }, { onConflict: 'email' })
+
+  if (upsertError) {
+    request.log.error({ error: upsertError, email }, 'Failed to store admin OTP')
+    return reply.code(500).send(formatError('Failed to process request. Please try again.', 'INTERNAL_ERROR'))
+  }
 
   // Send OTP email
   try {
@@ -337,15 +342,20 @@ fastify.post('/admin/reset-password', {
     return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
   }
 
-  const { email, otp, password } = parsed.data
+  const email = parsed.data.email.toLowerCase().trim()
+  const { otp, password } = parsed.data
   const supabase = getSupabase()
 
   // Get OTP record
-  const { data: otpRecord } = await supabase
+  const { data: otpRecord, error: queryError } = await supabase
     .from('password_reset_otps')
     .select('*')
     .eq('email', email)
     .single()
+
+  if (queryError) {
+    request.log.error({ error: queryError, email }, 'Failed to query admin OTP record')
+  }
 
   if (!otpRecord) {
     return reply.code(400).send(formatError('No password reset request found.', 'OTP_NOT_FOUND'))

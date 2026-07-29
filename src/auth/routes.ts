@@ -233,12 +233,12 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
     }
 
-    const { email } = parsed.data
+    const email = parsed.data.email.toLowerCase().trim()
     const supabase = getSupabase()
 
     // Check if user exists
     const { data: user } = await supabase.auth.admin.listUsers()
-    const userExists = user?.users?.some(u => u.email === email)
+    const userExists = user?.users?.some(u => u.email?.toLowerCase() === email)
 
     if (!userExists) {
       return reply.code(404).send(formatError('No account found with this email address.', 'USER_NOT_FOUND'))
@@ -249,7 +249,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
 
     // Store OTP in database
-    await supabase.from('password_reset_otps').upsert({
+    const { error: upsertError } = await supabase.from('password_reset_otps').upsert({
       email,
       otp_hash: await hashOtp(otp),
       expires_at: expiresAt.toISOString(),
@@ -257,6 +257,11 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       used: false,
       created_at: new Date().toISOString(),
     }, { onConflict: 'email' })
+
+    if (upsertError) {
+      request.log.error({ error: upsertError, email }, 'Failed to store OTP')
+      return reply.code(500).send(formatError('Failed to process request. Please try again.', 'INTERNAL_ERROR'))
+    }
 
     // Send OTP email
     try {
@@ -301,7 +306,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
     }
 
-    const { email, otp } = parsed.data
+    const email = parsed.data.email.toLowerCase().trim()
+    const { otp } = parsed.data
     const supabase = getSupabase()
 
     const { data: otpRecord } = await supabase
@@ -366,15 +372,20 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
     }
 
-    const { email, otp, password } = parsed.data
+    const email = parsed.data.email.toLowerCase().trim()
+    const { otp, password } = parsed.data
     const supabase = getSupabase()
 
     // Get OTP record
-    const { data: otpRecord } = await supabase
+    const { data: otpRecord, error: queryError } = await supabase
       .from('password_reset_otps')
       .select('*')
       .eq('email', email)
       .single()
+
+    if (queryError) {
+      request.log.error({ error: queryError, email }, 'Failed to query OTP record')
+    }
 
     if (!otpRecord) {
       return reply.code(400).send(formatError('No password reset request found. Please request a new code.', 'OTP_NOT_FOUND'))
@@ -406,7 +417,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
     // Find the user
     const { data: users } = await supabase.auth.admin.listUsers()
-    const user = users?.users?.find(u => u.email === email)
+    const user = users?.users?.find(u => u.email?.toLowerCase() === email)
 
     if (!user) {
       return reply.code(400).send(formatError('User not found.', 'USER_NOT_FOUND'))

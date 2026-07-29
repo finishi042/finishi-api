@@ -1,29 +1,606 @@
-<div class="email-body">
-  <p class="greeting">Hey {{name}}!</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Welcome to Finishi</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+  <style>
+    body, table, td, p, a, li { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
 
-  <p>
-    Welcome aboard! Your Finishi account is ready and waiting. We're excited to have you join our community of lifelong learners.
-  </p>
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100% !important;
+      min-width: 100%;
+      background-color: #F3F4F6;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      color: #1F2937;
+      line-height: 1.6;
+    }
 
-  <div class="feature-box">
-    <p>
-      Finishi transforms complex topics into bite-sized, actionable lessons designed around your goals. Learn at your own pace, track your progress, and actually retain what you learn.
-    </p>
+    .outer-wrapper {
+      width: 100%;
+      background-color: #F3F4F6;
+      padding: 32px 16px;
+    }
+
+    .email-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      background: #FFFFFF;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    /* ── Hero Section ─────────────────────────────── */
+    .hero {
+      background: linear-gradient(160deg, #0D0B2E 0%, #1A1145 40%, #2D1B69 70%, #1A1145 100%);
+      padding: 48px 40px 56px;
+      text-align: left;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-logo {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .hero-logo-icon {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #7B2CBF, #9D4EDD);
+      border-radius: 6px;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    .hero-logo-text {
+      display: inline-block;
+      color: #FFFFFF;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      vertical-align: middle;
+    }
+
+    .hero h1 {
+      margin: 0 0 4px;
+      color: #FFFFFF;
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+    }
+
+    .hero h1 .highlight {
+      color: #A78BFA;
+    }
+
+    .hero-subtitle {
+      margin: 16px 0 0;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .hero-cta {
+      display: inline-block;
+      margin-top: 28px;
+      background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%);
+      color: #FFFFFF !important;
+      text-decoration: none;
+      padding: 14px 32px;
+      border-radius: 28px;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 0.2px;
+    }
+
+    /* ── Greeting Section ─────────────────────────── */
+    .greeting-section {
+      padding: 40px 40px 32px;
+    }
+
+    .greeting-row {
+      display: table;
+      width: 100%;
+    }
+
+    .greeting-left {
+      display: table-cell;
+      vertical-align: top;
+      width: 60%;
+    }
+
+    .greeting-right {
+      display: table-cell;
+      vertical-align: top;
+      width: 40%;
+      text-align: right;
+    }
+
+    .greeting-name {
+      margin: 0 0 16px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #1F2937;
+    }
+
+    .greeting-text {
+      margin: 0;
+      font-size: 15px;
+      color: #4B5563;
+      line-height: 1.7;
+    }
+
+    .greeting-text strong {
+      color: #1F2937;
+    }
+
+    .adapts-box {
+      background: #F9FAFB;
+      border: 1px solid #E5E7EB;
+      border-radius: 12px;
+      padding: 16px 20px;
+      text-align: left;
+    }
+
+    .adapts-icon {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #EDE9FE, #DDD6FE);
+      border-radius: 8px;
+      text-align: center;
+      line-height: 32px;
+      margin-bottom: 8px;
+    }
+
+    .adapts-text {
+      margin: 0;
+      font-size: 13px;
+      color: #4B5563;
+      line-height: 1.5;
+    }
+
+    /* ── Features Section ─────────────────────────── */
+    .features-section {
+      padding: 0 40px 40px;
+    }
+
+    .features-title {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: #1F2937;
+      margin: 0 0 24px;
+    }
+
+    .features-grid {
+      width: 100%;
+      border-spacing: 12px;
+      border-collapse: separate;
+    }
+
+    .feature-card {
+      background: #F9FAFB;
+      border: 1px solid #E5E7EB;
+      border-radius: 12px;
+      padding: 20px 16px;
+      text-align: left;
+      vertical-align: top;
+      width: 25%;
+    }
+
+    .feature-icon {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      text-align: center;
+      line-height: 40px;
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+
+    .feature-icon-purple { background: #EDE9FE; }
+    .feature-icon-blue { background: #DBEAFE; }
+    .feature-icon-green { background: #D1FAE5; }
+    .feature-icon-orange { background: #FEF3C7; }
+
+    .feature-name {
+      margin: 0 0 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1F2937;
+    }
+
+    .feature-desc {
+      margin: 0;
+      font-size: 12px;
+      color: #6B7280;
+      line-height: 1.5;
+    }
+
+    /* ── Motivational Section ─────────────────────── */
+    .motivation-section {
+      padding: 0 40px 32px;
+    }
+
+    .motivation-box {
+      background: #F9FAFB;
+      border: 1px solid #E5E7EB;
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: table;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .motivation-left {
+      display: table-cell;
+      vertical-align: middle;
+      width: 70%;
+    }
+
+    .motivation-right {
+      display: table-cell;
+      vertical-align: middle;
+      text-align: right;
+      width: 30%;
+    }
+
+    .motivation-icon {
+      display: inline-block;
+      width: 36px;
+      height: 36px;
+      background: #EDE9FE;
+      border-radius: 8px;
+      text-align: center;
+      line-height: 36px;
+      font-size: 16px;
+      margin-right: 12px;
+      vertical-align: middle;
+    }
+
+    .motivation-text {
+      display: inline-block;
+      vertical-align: middle;
+      font-size: 14px;
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .motivation-text strong {
+      display: block;
+      font-weight: 600;
+      color: #1F2937;
+    }
+
+    .motivation-link {
+      color: #7C3AED;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    /* ── CTA Banner ───────────────────────────────── */
+    .cta-banner {
+      margin: 0 40px 40px;
+      background: linear-gradient(135deg, #1E1B4B, #312E81);
+      border-radius: 14px;
+      padding: 28px 32px;
+      display: table;
+      width: calc(100% - 80px);
+    }
+
+    .cta-banner-left {
+      display: table-cell;
+      vertical-align: middle;
+      width: 65%;
+    }
+
+    .cta-banner-right {
+      display: table-cell;
+      vertical-align: middle;
+      text-align: right;
+      width: 35%;
+    }
+
+    .cta-banner-icon {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      background: rgba(124, 58, 237, 0.3);
+      border-radius: 8px;
+      text-align: center;
+      line-height: 32px;
+      margin-right: 12px;
+      vertical-align: middle;
+    }
+
+    .cta-banner-text {
+      display: inline-block;
+      vertical-align: middle;
+      max-width: 240px;
+    }
+
+    .cta-banner-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .cta-banner-subtitle {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.4;
+    }
+
+    .cta-banner-btn {
+      display: inline-block;
+      background: #FFFFFF;
+      color: #6D28D9 !important;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* ── Footer ───────────────────────────────────── */
+    .email-footer {
+      padding: 32px 40px;
+      border-top: 1px solid #F3F4F6;
+    }
+
+    .footer-row {
+      display: table;
+      width: 100%;
+    }
+
+    .footer-left {
+      display: table-cell;
+      vertical-align: top;
+      width: 25%;
+    }
+
+    .footer-center {
+      display: table-cell;
+      vertical-align: top;
+      width: 50%;
+    }
+
+    .footer-right {
+      display: table-cell;
+      vertical-align: top;
+      width: 25%;
+      text-align: right;
+    }
+
+    .footer-logo-icon {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      background: linear-gradient(135deg, #7B2CBF, #9D4EDD);
+      border-radius: 5px;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    .footer-logo-text {
+      display: inline-block;
+      font-size: 15px;
+      font-weight: 700;
+      color: #1F2937;
+      vertical-align: middle;
+    }
+
+    .footer-help-title {
+      margin: 0 0 4px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1F2937;
+    }
+
+    .footer-help-text {
+      margin: 0;
+      font-size: 12px;
+      color: #6B7280;
+      line-height: 1.5;
+    }
+
+    .footer-help-text a {
+      color: #1F2937;
+      font-weight: 600;
+      text-decoration: underline;
+    }
+
+    .footer-social-icon {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      background: #F3F4F6;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 28px;
+      margin-left: 6px;
+      color: #6B7280;
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .footer-copyright {
+      text-align: center;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #F3F4F6;
+    }
+
+    .footer-copyright p {
+      margin: 0;
+      font-size: 12px;
+      color: #9CA3AF;
+    }
+
+    /* ── Responsive ───────────────────────────────── */
+    @media only screen and (max-width: 600px) {
+      .outer-wrapper { padding: 16px 8px !important; }
+      .hero { padding: 36px 24px 44px !important; }
+      .hero h1 { font-size: 28px !important; }
+      .greeting-section { padding: 28px 24px 24px !important; }
+      .greeting-row { display: block !important; }
+      .greeting-left, .greeting-right { display: block !important; width: 100% !important; }
+      .greeting-right { text-align: left !important; margin-top: 16px; }
+      .features-section { padding: 0 24px 28px !important; }
+      .features-grid { border-spacing: 8px !important; }
+      .feature-card { display: block !important; width: 100% !important; margin-bottom: 8px; }
+      .motivation-section { padding: 0 24px 24px !important; }
+      .motivation-box { display: block !important; }
+      .motivation-left, .motivation-right { display: block !important; width: 100% !important; text-align: left !important; }
+      .motivation-right { margin-top: 12px; }
+      .cta-banner { margin: 0 24px 28px !important; width: calc(100% - 48px) !important; padding: 24px !important; }
+      .cta-banner-left, .cta-banner-right { display: block !important; width: 100% !important; text-align: left !important; }
+      .cta-banner-right { margin-top: 16px; }
+      .email-footer { padding: 24px !important; }
+      .footer-row { display: block !important; }
+      .footer-left, .footer-center, .footer-right { display: block !important; width: 100% !important; text-align: left !important; margin-bottom: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="outer-wrapper">
+    <div class="email-container">
+
+      <!-- Hero Section -->
+      <div class="hero">
+        <div class="hero-logo">
+          <span class="hero-logo-icon"></span>
+          <span class="hero-logo-text">FINISHI</span>
+        </div>
+        <h1>Stop Searching.<br /><span class="highlight">Start Learning.</span></h1>
+        <p class="hero-subtitle">Your AI-powered learning journey<br />begins now.</p>
+        <a href="{{ctaUrl}}" class="hero-cta">Start Learning &rarr;</a>
+      </div>
+
+      <!-- Greeting Section -->
+      <div class="greeting-section">
+        <div class="greeting-row">
+          <div class="greeting-left">
+            <h2 class="greeting-name">Hi {{name}} &#128075;</h2>
+            <p class="greeting-text">
+              <strong>Welcome to Finishi!</strong> We're excited to have you on board. Your personalized learning workspace is ready to help you achieve more every day.
+            </p>
+          </div>
+          <div class="greeting-right">
+            <div class="adapts-box">
+              <div class="adapts-icon">&#10024;</div>
+              <p class="adapts-text">Finishi adapts to you, so you can focus on what truly matters.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Features Section -->
+      <div class="features-section">
+        <h3 class="features-title">Everything you need to succeed</h3>
+        <table class="features-grid" role="presentation" cellpadding="0" cellspacing="0">
+          <tr>
+            <td class="feature-card">
+              <div class="feature-icon feature-icon-purple">&#129302;</div>
+              <p class="feature-name">AI Tutor</p>
+              <p class="feature-desc">Get instant explanations tailored to your level and learning style.</p>
+            </td>
+            <td class="feature-card">
+              <div class="feature-icon feature-icon-blue">&#128218;</div>
+              <p class="feature-name">Smart Notes</p>
+              <p class="feature-desc">AI-powered notes that organize, summarize and make sense for you.</p>
+            </td>
+            <td class="feature-card">
+              <div class="feature-icon feature-icon-green">&#9989;</div>
+              <p class="feature-name">Practice</p>
+              <p class="feature-desc">Adaptive quizzes and exercises to reinforce what you learn.</p>
+            </td>
+            <td class="feature-card">
+              <div class="feature-icon feature-icon-orange">&#128202;</div>
+              <p class="feature-name">Progress</p>
+              <p class="feature-desc">Track your progress and stay motivated with clear insights.</p>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Motivational Section -->
+      <div class="motivation-section">
+        <div class="motivation-box">
+          <div class="motivation-left">
+            <span class="motivation-icon">&#128161;</span>
+            <span class="motivation-text">
+              <strong>Small steps today. Big results tomorrow.</strong>
+              Consistency is your superpower.
+            </span>
+          </div>
+          <div class="motivation-right">
+            <a href="{{ctaUrl}}" class="motivation-link">You've got this! &rarr;</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA Banner -->
+      <div class="cta-banner">
+        <div class="cta-banner-left">
+          <span class="cta-banner-icon">&#11088;</span>
+          <span class="cta-banner-text">
+            <p class="cta-banner-title">Ready to turn your goals into mastery?</p>
+            <p class="cta-banner-subtitle">Open your workspace and continue your first lesson.</p>
+          </span>
+        </div>
+        <div class="cta-banner-right">
+          <a href="{{ctaUrl}}" class="cta-banner-btn">Open Workspace &rarr;</a>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="email-footer">
+        <div class="footer-row">
+          <div class="footer-left">
+            <span class="footer-logo-icon"></span>
+            <span class="footer-logo-text">FINISHI</span>
+          </div>
+          <div class="footer-center">
+            <p class="footer-help-title">Need help? We're here for you.</p>
+            <p class="footer-help-text">Reply to this email or contact us at<br /><a href="mailto:support@finishi.org">support@finishi.org</a></p>
+          </div>
+          <div class="footer-right">
+            <a href="https://finishi.org" class="footer-social-icon" aria-label="Website">&#127760;</a>
+            <a href="https://twitter.com/finikiorg" class="footer-social-icon" aria-label="Twitter">&#120143;</a>
+            <a href="https://linkedin.com/company/finishi" class="footer-social-icon" aria-label="LinkedIn">in</a>
+          </div>
+        </div>
+        <div class="footer-copyright">
+          <p>&copy; {{year}} Finishi. All rights reserved.</p>
+        </div>
+      </div>
+
+    </div>
   </div>
-
-  {{#if skill}}
-  <p>
-    We've already set up a personalised learning path for you around <span class="badge">{{skill}}</span> — your first lesson is ready and waiting.
-  </p>
-  {{/if}}
-
-  <div class="cta-wrap">
-    <a class="cta" href="{{ctaUrl}}">Start Learning</a>
-  </div>
-
-  <hr class="divider" />
-
-  <p style="font-size: 14px; color: #6B7280;">
-    Have questions or need help getting started? Just reply to this email — a real human reads every message.
-  </p>
-</div>
+</body>
+</html>

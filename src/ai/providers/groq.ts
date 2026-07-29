@@ -34,7 +34,7 @@ export class GroqProvider implements AIProvider {
   }
 
   async complete(request: AICompletionRequest): Promise<AICompletionResponse> {
-    const model = this.config.model || 'llama-3.1-70b-versatile'
+    const model = this.config.model || 'llama-3.3-70b-versatile'
     const url = `${this.config.baseUrl || 'https://api.groq.com/openai/v1'}/chat/completions`
 
     const body: Record<string, unknown> = {
