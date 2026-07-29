@@ -32,6 +32,7 @@ import {
   refreshCookieOptions,
 } from './cookie.js'
 import { establishSession, clearSession } from './session.js'
+import { checkLimit, recordFailure, recordSuccess, makeKey } from './rate-limiter.js'
 
 // OTP hashing utilities
 async function hashOtp(otp: string): Promise<string> {
@@ -99,30 +100,37 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   /**
    * POST /auth/login
    * Authenticate with email/password, set httpOnly session cookies.
-   * Stricter rate limit: 10 requests per 15 minutes per IP to prevent brute force
+   * Exponential backoff rate limit per IP+email: 1m → 2m → 4m → 8m → 16m
    */
-  fastify.post('/login', {
-    config: {
-      rateLimit: {
-        max: 10,
-        timeWindow: '15 minutes',
-        keyGenerator: (request: any) => request.ip,
-      },
-    },
-  }, async (request, reply) => {
+  fastify.post('/login', async (request, reply) => {
     const parsed = LoginSchema.safeParse(request.body)
     if (!parsed.success) {
       return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
     }
 
     const { email, password } = parsed.data
-    const supabase = getSupabase()
+    const key = makeKey(request.ip, email)
 
+    // Check exponential backoff lockout
+    const limit = checkLimit(key)
+    if (!limit.allowed) {
+      const mins = Math.ceil(limit.retryAfterSecs / 60)
+      return reply.code(429).send(formatError(
+        `Too many login attempts. Try again in ${mins} minute${mins !== 1 ? 's' : ''}.`,
+        'RATE_LIMIT_EXCEEDED',
+      ))
+    }
+
+    const supabase = getSupabase()
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error || !data.session) {
+      recordFailure(key)
       return reply.code(401).send(formatError('Invalid email or password', 'INVALID_CREDENTIALS'))
     }
+
+    // Successful login — reset backoff
+    recordSuccess(key)
 
     const { session, user } = data
 
@@ -217,23 +225,30 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   /**
    * POST /auth/forgot-password
    * Generate and send a 6-digit OTP to the user's email.
-   * Stricter rate limit: 5 requests per 15 minutes per IP
+   * Exponential backoff rate limit per IP+email: 1m → 2m → 4m → 8m → 16m
    */
-  fastify.post('/forgot-password', {
-    config: {
-      rateLimit: {
-        max: 5,
-        timeWindow: '15 minutes',
-        keyGenerator: (request: any) => request.ip,
-      },
-    },
-  }, async (request, reply) => {
+  fastify.post('/forgot-password', async (request, reply) => {
     const parsed = ForgotPasswordSchema.safeParse(request.body)
     if (!parsed.success) {
       return reply.code(400).send(formatError(parsed.error.issues[0].message, 'VALIDATION_ERROR'))
     }
 
     const email = parsed.data.email.toLowerCase().trim()
+    const key = makeKey(request.ip, email)
+
+    // Check exponential backoff lockout
+    const limit = checkLimit(key)
+    if (!limit.allowed) {
+      const mins = Math.ceil(limit.retryAfterSecs / 60)
+      return reply.code(429).send(formatError(
+        `Too many requests. Try again in ${mins} minute${mins !== 1 ? 's' : ''}.`,
+        'RATE_LIMIT_EXCEEDED',
+      ))
+    }
+
+    // Record attempt immediately (before processing) to prevent enumeration spam
+    recordFailure(key)
+
     const supabase = getSupabase()
 
     // Check if user exists
