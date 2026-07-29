@@ -89,3 +89,13 @@ export function recordSuccess(key: string): void {
 export function makeKey(ip: string, identifier?: string): string {
   return identifier ? `${ip}:${identifier.toLowerCase().trim()}` : ip
 }
+
+/**
+ * Clear all rate limit entries. Intended for use in tests only.
+ */
+export function clearAll(): void {
+  for (const entry of store.values()) {
+    if (entry.cleanupTimer) clearTimeout(entry.cleanupTimer)
+  }
+  store.clear()
+}

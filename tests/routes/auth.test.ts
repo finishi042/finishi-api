@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import Fastify from 'fastify'
 import fastifyCookie from '@fastify/cookie'
 import { fakeUser } from '../helpers/build-app.js'
+import { clearAll } from '../../src/auth/rate-limiter.js'
 
 // ── Create persistent mock objects ───────────────────────────────────────────
 
@@ -81,6 +82,7 @@ describe('Auth Routes', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks()
+    clearAll()
     app = await buildAuthApp()
   })
 
