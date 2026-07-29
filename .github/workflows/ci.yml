@@ -138,7 +138,7 @@ jobs:
             --max-instances=10 \
             --timeout=60s \
             --set-env-vars="NODE_ENV=production,LOG_LEVEL=info" \
-            --set-secrets="SUPABASE_URL=supabase-url:latest,SUPABASE_ANON_KEY=supabase-anon-key:latest,SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest,SUPABASE_JWT_SECRET=supabase-jwt-secret:latest,ALLOWED_ORIGINS=allowed-origins:latest,FRONTEND_URL=frontend-url:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest,GOOGLE_REDIRECT_URL=google-redirect-url:latest" \
+            --set-secrets="SUPABASE_URL=supabase-url:latest,SUPABASE_ANON_KEY=supabase-anon-key:latest,SUPABASE_SERVICE_ROLE_KEY=supabase-service-role-key:latest,SUPABASE_JWT_SECRET=supabase-jwt-secret:latest,ALLOWED_ORIGINS=allowed-origins:latest,FRONTEND_URL=frontend-url:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest,GOOGLE_REDIRECT_URL=google-redirect-url:latest,AI_PROVIDER=ai-provider:latest,AI_FALLBACK_CHAIN=ai-fallback-chain:latest,GEMINI_API_KEY=gemini-api-key:latest,GEMINI_MODEL=gemini-model:latest,GROQ_API_KEY=groq-api-key:latest,GROQ_MODEL=groq-model:latest,RESEND_API_KEY=resend-api-key:latest,EMAIL_FROM=email-from:latest" \
             --quiet
           echo "✓ Deployment complete"
 
